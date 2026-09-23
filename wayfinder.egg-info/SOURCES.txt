@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+tests/test_gate.py
+wayfinder/__init__.py
+wayfinder/app.py
+wayfinder/config.py
+wayfinder/hooks.py
+wayfinder/mcp_server.py
+wayfinder/policies.py
+wayfinder.egg-info/PKG-INFO
+wayfinder.egg-info/SOURCES.txt
+wayfinder.egg-info/dependency_links.txt
+wayfinder.egg-info/entry_points.txt
+wayfinder.egg-info/requires.txt
+wayfinder.egg-info/top_level.txt

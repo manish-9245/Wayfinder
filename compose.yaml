@@ -1,0 +1,44 @@
+services:
+  wayfinder:
+    build: .
+    ports:
+      - "${WAYFINDER_PORT:-8000}:8000"
+    environment:
+      WAYFINDER_HOST: "0.0.0.0"
+      LAYA_DEVICE: "${LAYA_DEVICE:-cpu}"
+      WAYFINDER_PRELOAD: "${WAYFINDER_PRELOAD:-1}"
+      LAYA_MODELS: "${LAYA_MODELS:-english,multilingual}"
+      LAYA_THREADS: "${LAYA_THREADS:-4}"
+      WAYFINDER_API_KEY: "${WAYFINDER_API_KEY:-}"
+      WAYFINDER_REDIS_URL: "${WAYFINDER_REDIS_URL:-redis://redis:6379/0}"
+    depends_on:
+      - redis
+    volumes:
+      - model-cache:/root/.cache/huggingface
+    init: true
+    deploy:
+      resources:
+        limits:
+          cpus: "4"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+
+  web:
+    build:
+      context: ./web
+      args:
+        WAYFINDER_API_URL: "${WAYFINDER_API_URL:-http://wayfinder:8000}"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      WAYFINDER_API_URL: "http://wayfinder:8000"
+    depends_on:
+      - gate
+    init: true
+
+volumes:
+  model-cache:
+  redis-data:

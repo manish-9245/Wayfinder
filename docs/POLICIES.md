@@ -1,0 +1,62 @@
+# Policies
+
+Policies live in `wayfinder/policies.yaml`. Each policy = description + thresholds +
+a `questions` mapping in exactly laya's schema (`choice` | `score` | `noul`).
+
+```yaml
+policies:
+  my_flow:
+    description: "What this gate protects."
+    auto_act_above: 0.85   # confidence/signal >= this -> act (or block for safety)
+    escalate_below: 0.60   # below this -> escalate (human)
+    questions:
+      dept:
+        type: choice
+        instructions: "Which team owns this?"
+        criteria: {billing: "invoices, refunds", tech: "bugs, outages"}
+      risk:
+        type: noul
+        instructions: "Is this risky or irreversible?"
+```
+
+## Primitives
+
+| Type | Returns | Use |
+|---|---|---|
+| `choice` | label + per-option probs + confidence | routing, intent, topic |
+| `score` | expected level + distribution + confidence | urgency, severity |
+| `noul` | P(true) in [0,1] | jailbreak? toxic? churn? refund? |
+
+Rules: `choice`/`score` need non-empty `criteria`; `noul` needs none (it
+always scores `[false, true]`). Unknown types fail at boot with the policy
+and question named. Never silently.
+
+## Built-ins
+
+- `llm_firewall` → `allow/review/block` on jailbreak, injection, leak risk.
+- `support_inbound` → `act/review/escalate` with department/urgency/churn/refund.
+- `model_router` → `small/frontier/human` per request.
+- `content_safety` → `allow/review/block` on toxic/threat/severity.
+
+## Per-call overrides
+
+```bash
+curl localhost:8000/v1/decide/support_inbound -d '{
+  "state": {...},
+  "model": "multilingual",
+  "options": {"auto_act_above": 0.9, "escalate_below": 0.5}
+}'
+```
+
+`model` pins a checkpoint (`english|multilingual|typed-decisions`); omit to
+auto-route by script/language (<1ms, pure Python). `lang` skips detection
+when you already know the ISO code. Overrides never mutate global state.
+
+## Calibration honesty
+
+Laya's probabilities are trained with proper scoring rules and temperature-fit
+(base ECE 0.466 down to 0.081 on English), but multilingual ships uncalibrated.
+fit temperatures on your own held-out data before trusting `auto_act_above`
+in production. Start at 0.85/0.60, measure escalation precision for a week,
+then tune per policy. Gate on `confidence`, not on `action.act_probability`
+(which reads ~1.0 for almost every input upstream).

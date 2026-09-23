@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" font-family="Inter,-apple-system,'Segoe UI',sans-serif" role="img" aria-label="laya-gate architecture: clients call a stateless gateway that applies policies, cache, and verdicts around the laya Router and its checkpoints">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0F172A"/><stop offset="1" stop-color="#111C33"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#7C8AA0"/>
+    </marker>
+    <marker id="arrG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#22C55E"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="800" rx="20" fill="url(#bg)"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="798.5" rx="20" fill="none" stroke="#334155" stroke-width="1.5"/>
+
+  <text x="48" y="56" fill="#F8FAFC" font-size="26" font-weight="700" letter-spacing="-0.5">Wayfinder request path</text>
+  <text x="48" y="80" fill="#94A3B8" font-size="14">Stateless gateway (this repo) around the laya pip package. One Router per worker, cache before torch.</text>
+  <rect x="980" y="30" width="172" height="34" rx="17" fill="none" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="1066" y="52" fill="#22C55E" font-size="13" font-weight="600" text-anchor="middle">Apache-2.0 · $0 self-hosted</text>
+
+  <!-- lane 1: clients -->
+  <text x="48" y="122" fill="#5B6F84" font-size="11" font-weight="700" letter-spacing="2">CLIENTS · ANY STACK</text>
+  <g font-size="14" font-weight="600">
+    <rect x="48" y="134" width="204" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="150" y="159" fill="#F8FAFC" text-anchor="middle">curl / any HTTP</text>
+    <text x="150" y="178" fill="#7C8AA0" font-size="12" font-weight="400" text-anchor="middle">one POST, any language</text>
+    <rect x="264" y="134" width="204" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="366" y="159" fill="#F8FAFC" text-anchor="middle">Python / TypeScript</text>
+    <text x="366" y="178" fill="#7C8AA0" font-size="12" font-weight="400" text-anchor="middle">httpx or fetch</text>
+    <rect x="480" y="134" width="204" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="582" y="159" fill="#F8FAFC" text-anchor="middle">LangGraph</text>
+    <text x="582" y="178" fill="#7C8AA0" font-size="12" font-weight="400" text-anchor="middle">conditional edge</text>
+    <rect x="696" y="134" width="204" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="798" y="159" fill="#F8FAFC" text-anchor="middle">MCP clients</text>
+    <text x="798" y="178" fill="#7C8AA0" font-size="12" font-weight="400" text-anchor="middle">Claude / Cursor / OpenClaw</text>
+    <rect x="912" y="134" width="204" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="1014" y="159" fill="#F8FAFC" text-anchor="middle">Web console</text>
+    <text x="1014" y="178" fill="#7C8AA0" font-size="12" font-weight="400" text-anchor="middle">Next.js playground</text>
+  </g>
+  <line x1="600" y1="190" x2="600" y2="222" stroke="#7C8AA0" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- lane 2: gateway -->
+  <text x="48" y="252" fill="#5B6F84" font-size="11" font-weight="700" letter-spacing="2">GATEWAY · FASTAPI, STATELESS, REPLICABLE</text>
+  <rect x="48" y="264" width="1068" height="150" rx="14" fill="#16213A" stroke="#475569" stroke-width="1.5"/>
+  <g font-size="13" font-weight="600">
+    <rect x="68" y="284" width="252" height="44" rx="9" fill="#0F172A" stroke="#22C55E"/>
+    <text x="194" y="311" fill="#F8FAFC" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12.5">POST /v1/decide/{policy}</text>
+    <rect x="332" y="284" width="220" height="44" rx="9" fill="#0F172A" stroke="#334155"/>
+    <text x="442" y="311" fill="#F8FAFC" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12.5">POST /v1/systemone</text>
+    <rect x="564" y="284" width="220" height="44" rx="9" fill="#0F172A" stroke="#334155"/>
+    <text x="674" y="311" fill="#F8FAFC" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12.5">POST /predict/batch</text>
+    <rect x="796" y="284" width="300" height="44" rx="9" fill="#0F172A" stroke="#334155"/>
+    <text x="946" y="311" fill="#F8FAFC" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12.5">GET /policies /health /metrics</text>
+  </g>
+  <text x="68" y="356" fill="#94A3B8" font-size="13">Named policies from YAML (questions plus thresholds) · per-call overrides ride in the body, never in global state</text>
+  <text x="68" y="380" fill="#94A3B8" font-size="13">Rails: bearer auth when set · 413 body cap · question and state caps before tokenization · GZip</text>
+  <rect x="68" y="388" width="0" height="0" fill="none"/>
+  <line x1="600" y1="414" x2="600" y2="442" stroke="#7C8AA0" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- lane 3: cross-cutting -->
+  <text x="48" y="472" fill="#5B6F84" font-size="11" font-weight="700" letter-spacing="2">CROSS-CUTTING · BEFORE TORCH</text>
+  <rect x="48" y="484" width="340" height="104" rx="12" fill="#12291D" stroke="#22C55E" stroke-width="1.5"/>
+  <text x="218" y="512" fill="#F8FAFC" font-size="15" font-weight="700" text-anchor="middle">Cache first</text>
+  <text x="218" y="534" fill="#94A3B8" font-size="12.5" text-anchor="middle">sha256(state + questions + model)</text>
+  <text x="218" y="554" fill="#94A3B8" font-size="12.5" text-anchor="middle">LRU in process, Redis shared · 1h TTL</text>
+  <text x="218" y="574" fill="#22C55E" font-size="12.5" font-weight="600" text-anchor="middle">HIT returns in microseconds</text>
+  <rect x="404" y="484" width="340" height="104" rx="12" fill="#16213A" stroke="#334155"/>
+  <text x="574" y="512" fill="#F8FAFC" font-size="15" font-weight="700" text-anchor="middle">Hooks</text>
+  <text x="574" y="534" fill="#94A3B8" font-size="12.5" text-anchor="middle">PII-scrubbed audit log per decision</text>
+  <text x="574" y="554" fill="#94A3B8" font-size="12.5" text-anchor="middle">Counters: requests, hits, blocks, latency</text>
+  <text x="574" y="574" fill="#94A3B8" font-size="12.5" text-anchor="middle">Pure functions, trivially testable</text>
+  <rect x="760" y="484" width="356" height="104" rx="12" fill="#16213A" stroke="#334155"/>
+  <text x="938" y="512" fill="#F8FAFC" font-size="15" font-weight="700" text-anchor="middle">Verdict</text>
+  <g font-size="12" font-weight="700">
+    <rect x="792" y="524" width="62" height="28" rx="14" fill="none" stroke="#22C55E"/><text x="823" y="543" fill="#22C55E" text-anchor="middle">act</text>
+    <rect x="862" y="524" width="78" height="28" rx="14" fill="none" stroke="#FBBF24"/><text x="901" y="543" fill="#FBBF24" text-anchor="middle">review</text>
+    <rect x="948" y="524" width="84" height="28" rx="14" fill="none" stroke="#F87171"/><text x="990" y="543" fill="#F87171" text-anchor="middle">escalate</text>
+  </g>
+  <text x="938" y="574" fill="#94A3B8" font-size="12.5" text-anchor="middle">safety policies emit allow / block instead</text>
+  <line x1="600" y1="588" x2="600" y2="614" stroke="#7C8AA0" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- lane 4: laya -->
+  <text x="48" y="644" fill="#5B6F84" font-size="11" font-weight="700" letter-spacing="2">LAYA PIP PACKAGE · NOT THIS REPO (pip install laya[serve])</text>
+  <rect x="48" y="656" width="300" height="56" rx="12" fill="#16213A" stroke="#38BDF8" stroke-width="1.5"/>
+  <text x="198" y="679" fill="#F8FAFC" font-size="15" font-weight="700" text-anchor="middle">Router (one per worker)</text>
+  <text x="198" y="698" fill="#7C8AA0" font-size="12" text-anchor="middle">preload at boot · &lt;1ms routing</text>
+  <line x1="348" y1="684" x2="378" y2="684" stroke="#7C8AA0" stroke-width="1.5" marker-end="url(#arr)"/>
+  <g font-size="13.5" font-weight="600">
+    <rect x="392" y="656" width="220" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="502" y="679" fill="#F8FAFC" text-anchor="middle">english</text>
+    <text x="502" y="698" fill="#7C8AA0" font-size="11.5" font-weight="400" text-anchor="middle">ModernBERT · 421M</text>
+    <rect x="624" y="656" width="240" height="56" rx="12" fill="#16213A" stroke="#334155"/>
+    <text x="744" y="679" fill="#F8FAFC" text-anchor="middle">multilingual</text>
+    <text x="744" y="698" fill="#7C8AA0" font-size="11.5" font-weight="400" text-anchor="middle">mmBERT · 322M · 100+ langs</text>
+    <rect x="876" y="656" width="240" height="56" rx="12" fill="#16213A" stroke="#334155" stroke-dasharray="5 4"/>
+    <text x="996" y="679" fill="#F8FAFC" text-anchor="middle">typed-decisions</text>
+    <text x="996" y="698" fill="#7C8AA0" font-size="11.5" font-weight="400" text-anchor="middle">lazy · explicit pin only</text>
+  </g>
+
+  <!-- return path -->
+  <line x1="1140" y1="560" x2="1140" y2="300" stroke="#22C55E" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <line x1="1140" y1="300" x2="1120" y2="300" stroke="#22C55E" stroke-width="1.5"/>
+  <polygon points="1120,294 1108,300 1120,306" fill="#22C55E"/>
+  <text x="1148" y="440" fill="#22C55E" font-size="12.5" font-weight="600" transform="rotate(90 1148,440)" text-anchor="middle">answers + verdict</text>
+
+  <!-- lifecycle -->
+  <rect x="48" y="728" width="1068" height="44" rx="10" fill="#0B1220" stroke="#334155"/>
+  <g font-size="12.5" fill="#94A3B8">
+    <text x="68" y="755"><tspan fill="#22C55E" font-weight="700">1</tspan> auth + caps</text>
+    <text x="218" y="755"><tspan fill="#22C55E" font-weight="700">2</tspan> resolve policy</text>
+    <text x="378" y="755"><tspan fill="#22C55E" font-weight="700">3</tspan> cache lookup</text>
+    <text x="538" y="755"><tspan fill="#22C55E" font-weight="700">4</tspan> Router.predict</text>
+    <text x="708" y="755"><tspan fill="#22C55E" font-weight="700">5</tspan> verdict + audit</text>
+    <text x="888" y="755"><tspan fill="#22C55E" font-weight="700">6</tspan> metrics</text>
+  </g>
+  <rect x="48" y="728" width="0" height="0" fill="none"/>
+</svg>

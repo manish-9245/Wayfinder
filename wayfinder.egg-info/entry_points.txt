@@ -1,0 +1,2 @@
+[console_scripts]
+wayfinder-mcp = wayfinder.mcp_server:main
