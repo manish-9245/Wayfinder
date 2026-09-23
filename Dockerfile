@@ -7,6 +7,7 @@ ENV LAYA_THREADS=4 WAYFINDER_PRELOAD=0 WAYFINDER_MODELS=english
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY wayfinder/ wayfinder/
+COPY docs/ docs/
 COPY ui/ ui/
 RUN pip install --upgrade pip && pip install -e . && python -c "import wayfinder; print('wayfinder ok')"
 
