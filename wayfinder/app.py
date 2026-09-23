@@ -248,7 +248,7 @@ def list_policies(full: bool = False) -> Dict[str, Any]:
 
 
 _DOCS_DIR = Path(__file__).parent.parent / "docs"
-_DOCS_ALLOW = {"API.md", "POLICIES.md", "MCP.md", "ARCHITECTURE.md", "DEPLOY.md"}
+_DOCS_ALLOW = {"API.md", "POLICIES.md", "MCP.md", "ARCHITECTURE.md", "DEPLOY.md", "architecture.svg"}
 
 
 @app.get("/docs-files/{name}")
@@ -259,7 +259,8 @@ def docs_file(name: str):
     path = _DOCS_DIR / name
     if not path.exists():
         raise HTTPException(status_code=404, detail="doc not shipped in this image")
-    return FileResponse(str(path), media_type="text/markdown")
+    media = "image/svg+xml" if name.endswith(".svg") else "text/markdown"
+    return FileResponse(str(path), media_type=media)
 
 
 @app.post("/v1/decide/{policy}")

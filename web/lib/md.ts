@@ -5,6 +5,10 @@ const inline = (s: string) =>
   esc(s)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
+      const url = /^(https?:|data:|\/)/.test(src) ? src : `/api/docs-files/${src}`;
+      return `<img src="${url}" alt="${alt}" loading="lazy" />`;
+    })
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
 /** Minimal markdown: fences, h1-h4, tables, lists, hr, paragraphs. */

@@ -3,9 +3,9 @@
 ![request path](architecture.svg)
 
 ```
-any client ──▶  gate (this repo)  ──▶  laya (pip package)  ──▶  checkpoints
-  HTTP/MCP/TS      policies, cache,      Router, typed
-  LangGraph        verdict, metrics      answers
+any client ──▶  Wayfinder (this repo)  ──▶  laya (pip package)  ──▶  checkpoints
+  HTTP/MCP/TS      policies, cache,          Router, typed
+  LangGraph        verdict, metrics          answers
 ```
 
 ## Why this shape
