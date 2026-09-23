@@ -16,4 +16,4 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/next.config.mjs ./
 RUN npm ci --omit=dev --no-audit --no-fund
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm start -- -p ${PORT:-3000}"]
