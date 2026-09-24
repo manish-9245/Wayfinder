@@ -203,6 +203,21 @@ def list_all_keys(search: str = "", limit: int = Query(default=50, ge=1, le=200)
     return {"total": total, "keys": out}
 
 
+@admin_router.delete("/users/{user_id}", status_code=204)
+def delete_user(user_id: int, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    u = db.query(User).filter(User.id == user_id).first()
+    if u is None:
+        raise HTTPException(status_code=404, detail="user not found")
+    if u.id == admin.id:
+        raise HTTPException(status_code=422, detail="cannot delete yourself")
+    # Keep audit history (usage rows stay, unattributed); keys go with the user.
+    db.query(UsageEvent).filter(UsageEvent.user_id == u.id).update({UsageEvent.user_id: None})
+    db.query(ApiKey).filter(ApiKey.user_id == u.id).delete()
+    db.delete(u)
+    db.commit()
+    return None
+
+
 @admin_router.delete("/keys/{prefix}", status_code=204)
 def admin_revoke_key(prefix: str, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     row = db.query(ApiKey).filter(ApiKey.prefix == prefix).first()

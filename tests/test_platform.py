@@ -110,3 +110,17 @@ def test_monthly_quota_enforced(client, monkeypatch):
     assert client.post("/v1/decide/support_inbound", json=body, headers=USER).status_code == 200
     r = client.post("/v1/decide/support_inbound", json={"state": {"body": "quota me again"}}, headers=USER)
     assert r.status_code == 429 and "quota" in r.json()["detail"]
+
+
+def test_admin_delete_user(client):
+    me = client.get("/v1/me", headers=USER).json()
+    uid = me["id"]
+    # Self-delete is blocked (lockout guard).
+    admin_me = client.get("/v1/me", headers=ADMIN).json()
+    assert client.delete(f"/v1/admin/users/{admin_me['id']}", headers=ADMIN).status_code == 422
+    # Deleting another user removes them + their keys, keeps usage rows.
+    client.post("/v1/decide/support_inbound", json={"state": {"body": "bye"}}, headers=USER)
+    assert client.delete(f"/v1/admin/users/{uid}", headers=ADMIN).status_code in (200, 204)
+    assert client.get("/v1/admin/users?search=test-user", headers=ADMIN).json()["total"] == 0
+    assert client.get("/v1/keys", headers=USER).json() == []  # keys gone with user
+    assert client.get("/v1/admin/logs", headers=ADMIN).json()["total"] >= 1  # audit kept

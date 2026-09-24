@@ -70,6 +70,8 @@ export const platform = {
   adminUsers: (t?: GetToken, q = "") => get<any>(`/v1/admin/users${q}`, t),
   patchUser: (id: number, patch: Record<string, any>, t?: GetToken) =>
     call<any>(`/v1/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(patch) }, t),
+  deleteUser: (id: number, t?: GetToken) =>
+    call<void>(`/v1/admin/users/${id}`, { method: "DELETE" }, t),
   adminKeys: (t?: GetToken, q = "") => get<any>(`/v1/admin/keys${q}`, t),
   adminRevokeKey: (prefix: string, t?: GetToken) =>
     call<void>(`/v1/admin/keys/${prefix}`, { method: "DELETE" }, t),

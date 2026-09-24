@@ -101,7 +101,7 @@ function Users({ getToken }: { getToken: any }) {
       {list.loading ? <p className="mut">Loading…</p> : (
         <div className="res-wrap">
           <table className="res">
-            <thead><tr><th>Email</th><th>Role</th><th>Plan</th><th>Quota/mo</th><th>Keys</th><th>Req 30d</th><th>Active</th></tr></thead>
+            <thead><tr><th>Email</th><th>Role</th><th>Plan</th><th>Quota/mo</th><th>Keys</th><th>Req 30d</th><th>Active</th><th></th></tr></thead>
             <tbody>{(list.data?.users ?? []).map((u: any) => (
               <tr key={u.id}>
                 <td className="mono">{u.email}</td>
@@ -129,6 +129,13 @@ function Users({ getToken }: { getToken: any }) {
                     onClick={() => patch(u.id, { is_active: !u.is_active })}>
                     {u.is_active ? "active" : "disabled"}
                   </button>
+                </td>
+                <td>
+                  <button type="button" className="danger" onClick={async () => {
+                    if (!confirm(`Delete ${u.email}? Their keys stop working immediately; request history is kept.`)) return;
+                    try { await platform.deleteUser(u.id, getToken); list.reload(); toast("Deleted"); }
+                    catch (e: any) { toast(e.message); }
+                  }}>Delete</button>
                 </td>
               </tr>
             ))}</tbody>
