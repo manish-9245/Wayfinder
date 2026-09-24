@@ -24,7 +24,6 @@ Performance contract:
 
 from __future__ import annotations
 
-import hmac
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -39,7 +38,18 @@ from pydantic import BaseModel, Field
 
 from wayfinder.auth import Caller, resolve_caller, supertokens_ready
 from wayfinder.config import settings
-from wayfinder.hooks import LRUCache, Timer, audit_line, cache_key, metrics_snapshot, record_request
+from wayfinder.mcp_host import build_mcp_app, share_router
+from wayfinder.hooks import (
+    LRUCache,
+    Timer,
+    audit_line,
+    cache_key,
+    metrics_snapshot,
+    new_request_id,
+    record_redis_error,
+    record_request,
+    req_id_ctx,
+)
 from wayfinder.policies import load_policies, verdict_for
 from wayfinder.routes_platform import admin_router, keys_router, me_router
 
@@ -81,15 +91,6 @@ class BatchRequest(BaseModel):
 # --------------------------------------------------------------------------- #
 # guards
 # --------------------------------------------------------------------------- #
-
-def require_auth(authorization: Optional[str] = Header(default=None)) -> None:
-    """Timing-safe bearer check. No key configured = open (dev); key set = enforced."""
-    if not settings.api_key:
-        return
-    want = f"Bearer {settings.api_key}"
-    if not authorization or not hmac.compare_digest(authorization, want):
-        raise HTTPException(status_code=401, detail="invalid or missing bearer token")
-
 
 async def enforce_body_cap(request: Request) -> None:
     if request.headers.get("content-length"):
@@ -138,6 +139,9 @@ async def lifespan(app: FastAPI):
 
     from wayfinder.db import init_db
 
+    logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO),
+                        format="%(asctime)s %(levelname)s %(name)s %(message)s", force=True)
+
     for attempt in range(5):  # Postgres may still be waking up on first deploy
         try:
             init_db()  # platform tables (users, keys, usage). No-op after first boot.
@@ -163,11 +167,17 @@ async def lifespan(app: FastAPI):
         try:
             import redis.asyncio as aioredis  # type: ignore
 
-            REDIS = aioredis.from_url(settings.redis_url, decode_responses=True)
+            # Timeouts keep a sick Redis from stalling inference; the
+            # health-check keeps one shared connection warm. Every later
+            # failure degrades to local state + the redis_errors metric.
+            REDIS = aioredis.from_url(settings.redis_url, decode_responses=True,
+                                      socket_connect_timeout=2, socket_timeout=2,
+                                      retry_on_timeout=True, health_check_interval=30)
             await REDIS.ping()
-            log.info("redis cache enabled")
+            log.info("redis cache + shared limits enabled")
         except Exception as exc:  # redis is best-effort; local LRU still works
-            log.warning("redis unavailable (%s); using local LRU only", exc)
+            log.warning("redis unavailable (%s); using local cache/limits only", exc)
+            record_redis_error()
             REDIS = None
 
     from laya import Router
@@ -184,7 +194,10 @@ async def lifespan(app: FastAPI):
         except TypeError:
             pass  # older laya: preload happens in constructor
     log.info("router ready (preload=%s models=%s)", settings.preload, models)
-    yield
+    share_router(ROUTER)  # hosted /mcp tools reuse these weights
+    from wayfinder.mcp_host import run_mcp
+    async with run_mcp():  # MCP session-manager lifespan (no-op when unmounted)
+        yield
     ROUTER = None
 
 
@@ -205,9 +218,41 @@ app.include_router(keys_router)
 app.include_router(me_router)
 app.include_router(admin_router)
 
+_MCP_APP = build_mcp_app()
+if _MCP_APP is not None:
+    # Hosted MCP (Streamable HTTP, stateless). Auth + rate limits run in the
+    # wrapper; request IDs + hardening headers come from the middleware above.
+    app.mount("/mcp", _MCP_APP)
+    log.info("mounted hosted mcp endpoint at /mcp")
+
 _UI_DIR = Path(__file__).parent.parent / "ui"
 if _UI_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(_UI_DIR)), name="static")
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next):
+    """Correlation ID + hardening headers on every response.
+
+    - Accepts a client-supplied X-Request-ID (capped, untrusted) or mints one;
+      the ID is echoed back, stored on a contextvar for audit/security logs,
+      and never persisted to the DB (usage rows carry no request IDs).
+    - Security headers: no MIME sniffing, no framing, same-origin referrer,
+      locked-down device APIs. (HSTS is intentionally absent — TLS terminates
+      at the edge, and this process also serves plain-HTTP local dev.)
+    """
+    rid = (request.headers.get("x-request-id") or "").strip()[:64] or new_request_id()
+    token = req_id_ctx.set(rid)
+    try:
+        response = await call_next(request)
+    finally:
+        req_id_ctx.reset(token)
+    response.headers["X-Request-ID"] = rid
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 
 def _router() -> Any:
@@ -316,8 +361,9 @@ async def _cached_predict(state: Any, questions: Dict[str, Any], *, model=None, 
                 res = _json.loads(raw)
                 CACHE.set(key, res)
                 return res, True
-        except Exception:
-            pass
+        except Exception as exc:
+            record_redis_error()
+            log.debug("redis cache read fallback (%s)", exc)
     res = _router().predict(state, questions, model=model, task=task, lang=lang)
     CACHE.set(key, res)
     if REDIS is not None:
@@ -325,8 +371,9 @@ async def _cached_predict(state: Any, questions: Dict[str, Any], *, model=None, 
             import json as _json
 
             await REDIS.setex(f"wf:{key}", 3600, _json.dumps(res, default=str))
-        except Exception:
-            pass
+        except Exception as exc:
+            record_redis_error()
+            log.debug("redis cache write fallback (%s)", exc)
     return res, False
 
 
@@ -389,7 +436,7 @@ async def decide(policy: str, req: DecideRequest, request: Request,
         ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
         await _log_rejection(request, authorization, policy, exc.status_code, req.state)
-        record_request(0, error=True)
+        record_request(0, error=True, status_code=exc.status_code, policy=policy)
         raise
     pol = _policy_or_422(policy)
     eff = dict(pol)
@@ -401,22 +448,23 @@ async def decide(policy: str, req: DecideRequest, request: Request,
         check_state(req.state, questions)
     except HTTPException as exc:
         _record(ctx, request, policy=policy, error=True, status_code=exc.status_code, state=req.state)
-        record_request(0, error=True)
+        record_request(0, error=True, status_code=exc.status_code, policy=policy)
         raise
     with Timer() as t:
         try:
             res, hit = await _cached_predict(req.state, questions, model=req.model, task=req.task, lang=req.lang)
         except (KeyError, ValueError) as exc:
             _record(ctx, request, policy=policy, error=True, status_code=422, state=req.state)
-            record_request(0, error=True)
+            record_request(0, error=True, status_code=422, policy=policy)
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
             _record(ctx, request, policy=policy, error=True, status_code=500, state=req.state)
-            record_request(0, error=True)
-            raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
+            record_request(0, error=True, status_code=500, policy=policy)
+            log.exception("inference failed rid=%s policy=%s", req_id_ctx.get(), policy)
+            raise HTTPException(status_code=500, detail="internal inference error") from exc
     out = _with_verdict(policy, eff, res, t.ms)
     out["cache_hit"] = hit
-    record_request(t.ms, cache_hit=hit, blocked=out["verdict"]["verdict"] == "block")
+    record_request(t.ms, cache_hit=hit, blocked=out["verdict"]["verdict"] == "block", policy=policy)
     _record(ctx, request, policy=policy, verdict=out["verdict"]["verdict"],
             confidence=out["verdict"].get("confidence"), latency_ms=t.ms,
             cache_hit=hit, blocked=out["verdict"]["verdict"] == "block", state=req.state)
@@ -436,15 +484,17 @@ async def systemone(payload: Dict[str, Any], request: Request,
         ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
         await _log_rejection(request, authorization, "", exc.status_code, state or "")
-        record_request(0, error=True)
+        record_request(0, error=True, status_code=exc.status_code)
         raise
     if not state or not questions:
         _record(ctx, request, policy="", error=True, status_code=422, state=state or "")
+        record_request(0, error=True, status_code=422)
         raise HTTPException(status_code=422, detail="needs {state, questions}")
     try:
         check_state(state, questions)
     except HTTPException as exc:
         _record(ctx, request, policy="", error=True, status_code=exc.status_code, state=state)
+        record_request(0, error=True, status_code=exc.status_code)
         raise
     with Timer() as t:
         try:
@@ -452,14 +502,15 @@ async def systemone(payload: Dict[str, Any], request: Request,
                                              task=payload.get("task"), lang=payload.get("lang"))
         except (KeyError, ValueError) as exc:
             _record(ctx, request, policy="", error=True, status_code=422, state=state)
-            record_request(0, error=True)
+            record_request(0, error=True, status_code=422)
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
             _record(ctx, request, policy="", error=True, status_code=500, state=state)
-            record_request(0, error=True)
-            raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
+            record_request(0, error=True, status_code=500)
+            log.exception("inference failed rid=%s route=systemone", req_id_ctx.get())
+            raise HTTPException(status_code=500, detail="internal inference error") from exc
     res["cache_hit"] = hit
-    record_request(t.ms, cache_hit=hit)
+    record_request(t.ms, cache_hit=hit, policy="")
     _record(ctx, request, policy="", latency_ms=t.ms, cache_hit=hit, state=state)
     return res
 
@@ -472,26 +523,28 @@ async def predict(req: RawPredictRequest, request: Request,
         ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
         await _log_rejection(request, authorization, "", exc.status_code, req.state)
-        record_request(0, error=True)
+        record_request(0, error=True, status_code=exc.status_code)
         raise
     try:
         check_state(req.state, req.questions)
     except HTTPException as exc:
         _record(ctx, request, policy="", error=True, status_code=exc.status_code, state=req.state)
+        record_request(0, error=True, status_code=exc.status_code)
         raise
     with Timer() as t:
         try:
             res, hit = await _cached_predict(req.state, req.questions, model=req.model, task=req.task, lang=req.lang)
         except (KeyError, ValueError) as exc:
             _record(ctx, request, policy="", error=True, status_code=422, state=req.state)
-            record_request(0, error=True)
+            record_request(0, error=True, status_code=422)
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
             _record(ctx, request, policy="", error=True, status_code=500, state=req.state)
-            record_request(0, error=True)
-            raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
+            record_request(0, error=True, status_code=500)
+            log.exception("inference failed rid=%s route=predict", req_id_ctx.get())
+            raise HTTPException(status_code=500, detail="internal inference error") from exc
     res["cache_hit"] = hit
-    record_request(t.ms, cache_hit=hit)
+    record_request(t.ms, cache_hit=hit, policy="")
     _record(ctx, request, policy="", latency_ms=t.ms, cache_hit=hit, state=req.state)
     return res
 
@@ -505,19 +558,22 @@ async def predict_batch(req: BatchRequest, request: Request,
         ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
         await _log_rejection(request, authorization, policy_name, exc.status_code)
-        record_request(0, error=True)
+        record_request(0, error=True, status_code=exc.status_code, policy=policy_name)
         raise
     if req.policy:
         try:
             questions = _policy_or_422(req.policy)["questions"]
         except HTTPException as exc:
             _record(ctx, request, policy=policy_name, error=True, status_code=exc.status_code)
+            record_request(0, error=True, status_code=exc.status_code, policy=policy_name)
             raise
     if not questions:
         _record(ctx, request, policy=policy_name, error=True, status_code=422)
+        record_request(0, error=True, status_code=422, policy=policy_name)
         raise HTTPException(status_code=422, detail="supply questions or a policy")
     if len(req.states) > 128:
         _record(ctx, request, policy=policy_name, error=True, status_code=413)
+        record_request(0, error=True, status_code=413, policy=policy_name)
         raise HTTPException(status_code=413, detail="max 128 states per batch call")
     # Fast path: one shared Router.predict_batch when nothing is cached.
     # Cache-aware path would break batching; for mixed hit/miss workloads the
@@ -543,7 +599,7 @@ async def predict_batch(req: BatchRequest, request: Request,
             for idx, res in zip(to_run, ran):
                 CACHE.set(cache_key(req.states[idx], questions, req.model), res)
                 results[idx] = {**res, "cache_hit": False}
-    record_request(t.ms)
+    record_request(t.ms, policy=policy_name)
     _record(ctx, request, policy=policy_name, latency_ms=t.ms,
             state=f"batch count={len(results)}")
     return {"count": len(results), "results": results}
@@ -560,7 +616,8 @@ def index() -> FileResponse:
 def main() -> None:
     import uvicorn
 
-    uvicorn.run("wayfinder.app:app", host=settings.host, port=settings.port, log_level=settings.log_level)
+    uvicorn.run("wayfinder.app:app", host=settings.host, port=settings.port, log_level=settings.log_level,
+                server_header=False)
 
 
 if __name__ == "__main__":

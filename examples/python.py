@@ -1,10 +1,17 @@
-"""Minimal Python client for wayfinder."""
+"""Minimal Python client for the hosted wayfinder."""
+import os
+
 import httpx
 
-BASE = "http://127.0.0.1:8000"
+BASE = os.getenv("WAYFINDER_URL", "https://wayfinder-production-282b.up.railway.app")
+KEY = os.environ["WF_KEY"]  # dashboard → API keys
+
 
 def decide(policy: str, state: dict, **kw) -> dict:
-    return httpx.post(f"{BASE}/v1/decide/{policy}", json={"state": state, **kw}, timeout=60).json()
+    return httpx.post(f"{BASE}/v1/decide/{policy}",
+                      headers={"authorization": f"Bearer {KEY}"},
+                      json={"state": state, **kw}, timeout=60).json()
+
 
 if __name__ == "__main__":
     r = decide("support_inbound", {"body": "Billed twice, refund today or we cancel"})

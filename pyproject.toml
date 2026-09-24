@@ -19,6 +19,7 @@ dependencies = [
     "supertokens-python>=0.30.0",
     "psycopg2-binary>=2.9.0",
     "redis>=5.0.0",
+    "mcp>=2.2.0",  # hosted /mcp endpoint (Streamable HTTP); stdio uses it too
 ]
 
 [project.optional-dependencies]

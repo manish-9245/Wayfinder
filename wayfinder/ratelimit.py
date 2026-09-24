@@ -1,13 +1,21 @@
 """Per-key + per-IP sliding-window rate limits, tiered by plan.
 
-In-memory windows are the source of truth on single-replica dev; when
-WAYFINDER_REDIS_URL is set the same decision is mirrored to Redis so N
-replicas share a budget. Redis failures degrade to in-memory (fail-open for
-availability, fail-closed never — inference stays up).
+Two layers, in this order:
+
+1. Redis fixed-window counters (only when WAYFINDER_REDIS_URL is set) — the
+   source of truth across replicas. One INCR (+EXPIRE on first hit) per
+   bucket per request; any Redis failure degrades to layer 2 and bumps the
+   `redis_errors` metric (fail-open for availability, never fail-closed).
+2. In-memory sliding windows — exact on single-replica dev, best-effort
+   per-replica when Redis is down.
+
+Bucket keys are namespaced `wf:rl:{bucket}:{minute}` with a 65s TTL so dead
+windows evaporate on their own.
 """
 
 from __future__ import annotations
 
+import logging
 import time
 from collections import deque
 from typing import Any, Optional
@@ -16,7 +24,10 @@ from fastapi import HTTPException, Request
 
 from wayfinder.auth import Caller
 from wayfinder.config import settings
+from wayfinder.hooks import record_redis_error
 from wayfinder.models import PLAN_ENTERPRISE, PLAN_PRO
+
+log = logging.getLogger("wayfinder")
 
 _WINDOWS: dict[str, deque[float]] = {}
 
@@ -58,14 +69,39 @@ def _check_memory(bucket: str, limit_per_min: int) -> tuple[bool, float]:
     return True, 0.0
 
 
-def check_limit(bucket: str, limit_per_min: int) -> tuple[bool, float]:
-    allowed, retry = _check_memory(bucket, limit_per_min)
-    if not allowed:
-        return False, retry
+def _check_redis(bucket: str, limit_per_min: int) -> tuple[bool, float] | None:
+    """Shared fixed-window counter. Returns None when Redis is unconfigured
+    or fails (caller falls back to memory); otherwise (allowed, retry_secs)."""
     redis = _redis()
-    if redis is None or limit_per_min <= 0:  # pragma: no cover - redis path
+    if redis is None or limit_per_min <= 0:
+        return None
+    try:
+        window = int(time.time() // 60)
+        key = f"wf:rl:{bucket}:{window}"
+        count = int(redis.incr(key))
+        if count == 1:
+            redis.expire(key, 65)
+        if count <= limit_per_min:
+            return True, 0.0
+        try:
+            ttl = redis.ttl(key)
+        except Exception:
+            ttl = -1
+        retry = float(ttl) if isinstance(ttl, (int, float)) and ttl > 0 else 60.0
+        return False, retry
+    except Exception as exc:  # fail open; the metric (not the log) is the signal
+        record_redis_error()
+        log.debug("redis rate-limit fallback (%s)", exc)
+        return None
+
+
+def check_limit(bucket: str, limit_per_min: int) -> tuple[bool, float]:
+    if limit_per_min <= 0:
         return True, 0.0
-    return True, 0.0  # Redis mirror is best-effort; enforced in-memory.
+    shared = _check_redis(bucket, limit_per_min)
+    if shared is not None:
+        return shared
+    return _check_memory(bucket, limit_per_min)
 
 
 def enforce_rate_limit(request: Request, caller: Caller) -> None:

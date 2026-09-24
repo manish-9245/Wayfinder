@@ -26,7 +26,7 @@ services:
     depends_on:
       - redis
     volumes:
-      - model-cache:/root/.cache/huggingface
+      - model-cache:/app/.cache/huggingface
       - app-data:/app/data
     init: true
     deploy:

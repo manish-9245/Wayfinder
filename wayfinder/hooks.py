@@ -15,11 +15,25 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import secrets
 import time
 from collections import OrderedDict
+from contextvars import ContextVar
 from typing import Any, Dict, Optional
 
-_METRICS: Dict[str, Any] = {"requests": 0, "cache_hits": 0, "blocks": 0, "latency_ms_sum": 0.0, "errors": 0}
+# Correlation ID for the in-flight request, set per-request by the
+# request-id middleware in app.py. Safe default when no request is active
+# (startup, tests, background work).
+req_id_ctx: ContextVar[str] = ContextVar("wayfinder_request_id", default="-")
+
+
+def new_request_id() -> str:
+    return secrets.token_hex(8)
+
+
+_METRICS: Dict[str, Any] = {"requests": 0, "cache_hits": 0, "blocks": 0, "latency_ms_sum": 0.0,
+                            "errors": 0, "rejected_401": 0, "rejected_429": 0, "redis_errors": 0,
+                            "by_policy": {}}
 
 
 def metrics_snapshot() -> Dict[str, Any]:
@@ -31,11 +45,29 @@ def metrics_snapshot() -> Dict[str, Any]:
         "cache_hit_rate": round(_METRICS["cache_hits"] / reqs, 4) if reqs else 0.0,
         "blocks": _METRICS["blocks"],
         "errors": _METRICS["errors"],
+        "rejected_401": _METRICS["rejected_401"],
+        "rejected_429": _METRICS["rejected_429"],
+        "redis_errors": _METRICS["redis_errors"],
+        "by_policy": dict(_METRICS["by_policy"]),
         "avg_latency_ms": round(avg, 2),
     }
 
 
-def record_request(latency_ms: float, *, cache_hit: bool = False, blocked: bool = False, error: bool = False) -> None:
+def reset_metrics() -> None:
+    _METRICS.update(requests=0, cache_hits=0, blocks=0, latency_ms_sum=0.0, errors=0,
+                    rejected_401=0, rejected_429=0, redis_errors=0)
+    _METRICS["by_policy"] = {}
+
+
+def record_redis_error() -> None:
+    """Count a failed Redis operation. Every Redis call site fails open to
+    local state, so this counter (surfaced in /metrics) is the ops signal
+    that the shared cache/limits are degraded — not the logs."""
+    _METRICS["redis_errors"] += 1
+
+
+def record_request(latency_ms: float, *, cache_hit: bool = False, blocked: bool = False,
+                   error: bool = False, status_code: int | None = None, policy: str = "") -> None:
     _METRICS["requests"] += 1
     _METRICS["latency_ms_sum"] += latency_ms
     if cache_hit:
@@ -44,6 +76,12 @@ def record_request(latency_ms: float, *, cache_hit: bool = False, blocked: bool 
         _METRICS["blocks"] += 1
     if error:
         _METRICS["errors"] += 1
+    if status_code == 401:
+        _METRICS["rejected_401"] += 1
+    elif status_code == 429:
+        _METRICS["rejected_429"] += 1
+    if policy:
+        _METRICS["by_policy"][policy] = _METRICS["by_policy"].get(policy, 0) + 1
 
 
 def cache_key(state: Any, questions: Dict[str, Any], model: Optional[str] = None) -> str:
@@ -83,7 +121,7 @@ class LRUCache:
 # Cheap, dependency-free PII scrub for audit logs (NOT a substitute for a real
 # DLP pass on regulated data — it only keeps tokens out of YOUR logs).
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
-_CARD_RE = re.compile(r"\b(?:\d[ -]?){13,16}\b")
+_CARD_RE = re.compile(r"\b(?:\d[ -]?){12,15}\d\b")
 _PHONE_RE = re.compile(r"\b\+?\d[\d\s().-]{7,}\b")
 
 
@@ -99,10 +137,16 @@ def redact_for_log(text: str) -> str:
 def audit_line(policy: str, state: Any, verdict: Dict[str, Any], latency_ms: float) -> str:
     preview = json.dumps(state, default=str, ensure_ascii=False)[:300]
     return (
-        f"policy={policy} verdict={verdict.get('verdict')} "
+        f"rid={req_id_ctx.get()} policy={policy} verdict={verdict.get('verdict')} "
         f"conf={verdict.get('confidence')} trigger={verdict.get('trigger')} "
         f"{latency_ms:.1f}ms state={redact_for_log(preview)}"
     )
+
+
+def security_event(action: str, detail: str = "") -> str:
+    """One-line security audit record (key lifecycle, admin changes, auth failures)."""
+    base = f"rid={req_id_ctx.get()} security action={action}"
+    return f"{base} {detail}" if detail else base
 
 
 class Timer:

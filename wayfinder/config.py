@@ -44,6 +44,12 @@ class Settings:
     threads: int | None = int(os.environ["LAYA_THREADS"]) if os.environ.get("LAYA_THREADS") else None
     # --- access ---
     api_key: str = os.getenv("WAYFINDER_API_KEY", "")  # empty = no auth (dev); set in prod
+    # Reject anonymous inference even when no master key / SuperTokens core is
+    # configured. Identity = SuperTokens session, wf_ service key, master
+    # bearer, or WAYFINDER_TEST_AUTH backdoor. Default off so the OSS
+    # quickstart and no-weights CI stay zero-config; enable in any deployment
+    # that serves untrusted clients.
+    require_auth: bool = _env_bool("WAYFINDER_REQUIRE_AUTH", False)
     # --- safety rails (mirror laya/serve.py so one mental model covers both) ---
     max_questions: int = _env_int("WAYFINDER_MAX_QUESTIONS", 64)
     max_state_chars: int = _env_int("WAYFINDER_MAX_STATE_CHARS", 50000)

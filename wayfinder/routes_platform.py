@@ -8,6 +8,7 @@ additionally requires role == admin.
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,6 +19,7 @@ from wayfinder import usage as usage_store
 from wayfinder.auth import get_current_user, hash_key, new_raw_key, require_admin
 from wayfinder.config import settings
 from wayfinder.db import get_db
+from wayfinder.hooks import security_event
 from wayfinder.models import PLANS, ApiKey, UsageEvent, User
 from wayfinder.ratelimit import monthly_quota, plan_limit_per_min
 from wayfinder.schemas import (
@@ -36,6 +38,8 @@ from wayfinder.schemas import (
 keys_router = APIRouter(prefix="/v1/keys", tags=["keys"])
 me_router = APIRouter(prefix="/v1/me", tags=["me"])
 admin_router = APIRouter(prefix="/v1/admin", tags=["admin"])
+
+log = logging.getLogger("wayfinder")
 
 MAX_KEYS_PER_USER = 10
 
@@ -67,6 +71,7 @@ def create_key(body: KeyCreate, user: User = Depends(get_current_user), db: Sess
     db.add(row)
     db.commit()
     db.refresh(row)
+    log.warning(security_event("key.created", f"user={user.email} prefix={prefix} name={row.name}"))
     out = _key_out(row)
     return KeyCreated(**out.model_dump(), key=raw)
 
@@ -84,6 +89,7 @@ def revoke_key(prefix: str, user: User = Depends(get_current_user), db: Session 
         raise HTTPException(status_code=404, detail="key not found")
     row.is_active = False
     db.commit()
+    log.warning(security_event("key.revoked", f"user={user.email} prefix={prefix}"))
     return None
 
 
@@ -185,6 +191,9 @@ def patch_user(user_id: int, patch: UserPatch,
         u.is_active = patch.is_active
     db.commit()
     db.refresh(u)
+    log.warning(security_event("admin.user_patched",
+                               f"admin={admin.email} target={u.email} "
+                               f"role={u.role} plan={u.plan} active={u.is_active}"))
     keys_count = db.query(ApiKey).filter(ApiKey.user_id == u.id).count()
     return UserOut(id=u.id, email=u.email, role=u.role, plan=u.plan, quota_monthly=u.quota_monthly,
                    is_active=u.is_active, created_at=u.created_at, keys_count=keys_count, requests_30d=0)
@@ -215,6 +224,7 @@ def delete_user(user_id: int, admin: User = Depends(require_admin), db: Session 
     db.query(ApiKey).filter(ApiKey.user_id == u.id).delete()
     db.delete(u)
     db.commit()
+    log.warning(security_event("admin.user_deleted", f"admin={admin.email} target={u.email}"))
     return None
 
 
@@ -225,6 +235,7 @@ def admin_revoke_key(prefix: str, admin: User = Depends(require_admin), db: Sess
         raise HTTPException(status_code=404, detail="key not found")
     row.is_active = False
     db.commit()
+    log.warning(security_event("admin.key_revoked", f"admin={admin.email} prefix={prefix}"))
     return None
 
 

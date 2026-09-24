@@ -1,7 +1,9 @@
 # Policies
 
-Policies live in `wayfinder/policies.yaml`. Each policy = description + thresholds +
-a `questions` mapping in exactly laya's schema (`choice` | `score` | `noul`).
+Each policy = description + thresholds + a `questions` mapping in the
+`choice` | `score` | `noul` schema. The hosted gateway ships four reviewed
+bundles; custom policy files are a self-hosting feature — see
+[GitHub](https://github.com/manish-9245/Wayfinder).
 
 ```yaml
 policies:
@@ -28,8 +30,8 @@ policies:
 | `noul` | P(true) in [0,1] | jailbreak? toxic? churn? refund? |
 
 Rules: `choice`/`score` need non-empty `criteria`; `noul` needs none (it
-always scores `[false, true]`). Unknown types fail at boot with the policy
-and question named. Never silently.
+always scores `[false, true]`). Unknown types fail with the policy and
+question named. Never silently.
 
 ## Built-ins
 
@@ -41,7 +43,10 @@ and question named. Never silently.
 ## Per-call overrides
 
 ```bash
-curl localhost:8000/v1/decide/support_inbound -d '{
+export WF_URL=https://wayfinder-production-282b.up.railway.app
+export WF_KEY=wf_…   # dashboard → API keys
+curl $WF_URL/v1/decide/support_inbound \
+  -H "authorization: Bearer $WF_KEY" -H 'content-type: application/json' -d '{
   "state": {...},
   "model": "multilingual",
   "options": {"auto_act_above": 0.9, "escalate_below": 0.5}
@@ -49,14 +54,15 @@ curl localhost:8000/v1/decide/support_inbound -d '{
 ```
 
 `model` pins a checkpoint (`english|multilingual|typed-decisions`); omit to
-auto-route by script/language (<1ms, pure Python). `lang` skips detection
-when you already know the ISO code. Overrides never mutate global state.
+auto-route by script/language (<1ms). `lang` skips detection when you
+already know the ISO code. Overrides never mutate global state.
 
 ## Calibration honesty
 
-Laya's probabilities are trained with proper scoring rules and temperature-fit
-(base ECE 0.466 down to 0.081 on English), but multilingual ships uncalibrated.
-fit temperatures on your own held-out data before trusting `auto_act_above`
-in production. Start at 0.85/0.60, measure escalation precision for a week,
-then tune per policy. Gate on `confidence`, not on `action.act_probability`
-(which reads ~1.0 for almost every input upstream).
+The model's probabilities are trained with proper scoring rules and
+temperature-fit (base ECE 0.466 down to 0.081 on English), but multilingual
+ships uncalibrated. Fit temperatures on your own held-out data before
+trusting `auto_act_above` for irreversible actions. Start at 0.85/0.60,
+measure escalation precision for a week, then tune per policy. Gate on
+`confidence`, not on `action.act_probability` (which reads ~1.0 for almost
+every input upstream).

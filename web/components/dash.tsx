@@ -3,14 +3,17 @@ import { useEffect, useState } from "react";
 import { SessionAuth } from "supertokens-auth-react/recipe/session";
 import { AUTH_OFF } from "@/lib/supertokens";
 import { platform, type GetToken, type LogRow } from "@/lib/platform";
+import { Spotlight } from "@/components/aceternity/spotlight";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-/** Session cookies authenticate; getToken stays for API-compat (wf_ keys). */
 export function usePlatform() {
   const getToken: GetToken = async () => null;
   return { getToken };
 }
 
-/** Bounces signed-out visitors to /auth (skipped in keyless dev mode). */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   if (AUTH_OFF) return <>{children}</>;
   return <SessionAuth>{children}</SessionAuth>;
@@ -18,12 +21,16 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
 export function Kpis({ items }: { items: { k: string; n: string }[] }) {
   return (
-    <div className="kpis">
+    <div className="mb-3.5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       {items.map((i) => (
-        <div className="kpi" key={i.k}>
-          <div className="k">{i.k}</div>
-          <div className="n">{i.n}</div>
-        </div>
+        <Spotlight key={i.k} className="rounded-lg">
+        <Card className="h-full">
+          <CardContent className="pt-4">
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{i.k}</div>
+            <div className="text-[26px] font-bold tabular-nums tracking-tight">{i.n}</div>
+          </CardContent>
+        </Card>
+        </Spotlight>
       ))}
     </div>
   );
@@ -38,70 +45,100 @@ export function DailyChart({ daily }: { daily: { day: string; requests: number }
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
   return (
-    <div className="card">
-      <h3>Requests per day</h3>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img"
-        aria-label={`Requests per day, peak ${max}`}>
-        <polyline points={pts.join(" ")} fill="none" stroke="var(--color-info)" strokeWidth="2.5"
-          strokeLinejoin="round" strokeLinecap="round" />
-        {pts.map((p, i) => {
-          const [x, y] = p.split(",");
-          return <circle key={i} cx={x} cy={y} r="3" fill="var(--color-info)"><title>{`${daily[i].day}: ${daily[i].requests}`}</title></circle>;
-        })}
-      </svg>
-      <p className="mut">Peak {max}/day · last {daily.length} days</p>
-    </div>
+    <Spotlight className="rounded-lg">
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle>Requests per day</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <svg className="block h-[120px] w-full" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Requests per day, peak ${max}`}>
+          <polyline points={pts.join(" ")} fill="none" stroke="hsl(var(--info))" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+          {pts.map((p, i) => {
+            const [x, y] = p.split(",");
+            return (
+              <circle key={i} cx={x} cy={y} r="3" fill="hsl(var(--info))">
+                <title>{`${daily[i].day}: ${daily[i].requests}`}</title>
+              </circle>
+            );
+          })}
+        </svg>
+        <CardDescription>
+          Peak {max}/day · last {daily.length} days
+        </CardDescription>
+      </CardContent>
+    </Card>
+    </Spotlight>
   );
 }
 
 export function PolicyBars({ rows }: { rows: { policy: string; requests: number }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.requests));
   return (
-    <div className="card">
-      <h3>By policy</h3>
-      {rows.length === 0 && <p className="mut">No traffic yet.</p>}
-      {rows.map((r) => (
-        <div key={r.policy}>
-          <div className="prow"><code>{r.policy}</code><span className="pct">{r.requests}</span></div>
-          <div className="bar"><div className="fill" style={{ width: `${(r.requests / max) * 100}%` }} /></div>
-        </div>
-      ))}
-    </div>
+    <Spotlight className="rounded-lg">
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle>By policy</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {rows.length === 0 && <p className="text-[13px] text-muted-foreground">No traffic yet.</p>}
+        {rows.map((r) => (
+          <div key={r.policy}>
+            <div className="mt-2.5 flex items-baseline justify-between gap-3 text-[13px]">
+              <code className="rounded-md border bg-background px-2 py-0.5 font-mono text-xs tabular-nums">{r.policy}</code>
+              <span className="font-mono tabular-nums text-muted-foreground">{r.requests}</span>
+            </div>
+            <Progress value={(r.requests / max) * 100} className="my-1.5 h-2" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+    </Spotlight>
   );
 }
 
 export function verdictChip(v: string) {
-  const cls = v === "act" || v === "allow" ? "ok"
-    : v === "review" || v === "escalate" ? "warn"
-    : v === "block" ? "bad" : "mut";
-  return <span className={`vchip ${cls}`}>{v || "—"}</span>;
+  const variant = v === "act" || v === "allow" ? "success" : v === "block" ? "destructive" : v ? "warning" : "secondary";
+  return <Badge variant={variant}>{v || "—"}</Badge>;
 }
 
 export function LogsTable({ logs, showEmail }: { logs: LogRow[]; showEmail?: boolean }) {
-  if (!logs.length) return <p className="mut">No requests match.</p>;
+  if (!logs.length) return <p className="text-[13px] text-muted-foreground">No requests match.</p>;
   return (
-    <div className="res-wrap">
-      <table className="res">
-        <thead><tr>
-          <th>Time</th>{showEmail && <th>User</th>}<th>Policy</th><th>Verdict</th>
-          <th>Conf</th><th>ms</th><th>Cache</th><th>Preview</th>
-        </tr></thead>
-        <tbody>
-          {logs.map((l) => (
-            <tr key={l.id}>
-              <td className="mono">{l.created_at ? new Date(l.created_at + "Z").toLocaleString() : "—"}</td>
-              {showEmail && <td className="mono">{l.email || `#${l.user_id ?? "?"}`}</td>}
-              <td><code>{l.policy || "—"}</code></td>
-              <td>{verdictChip(l.verdict)}{l.error && <span className="vchip bad">err {l.status_code}</span>}</td>
-              <td className="mono">{l.confidence != null ? l.confidence.toFixed(2) : "—"}</td>
-              <td className="mono">{l.latency_ms.toFixed(0)}</td>
-              <td>{l.cache_hit ? "hit" : "miss"}</td>
-              <td className="mono">{l.state_preview.slice(0, 90)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Time</TableHead>
+          {showEmail && <TableHead>User</TableHead>}
+          <TableHead>Policy</TableHead>
+          <TableHead>Verdict</TableHead>
+          <TableHead>Conf</TableHead>
+          <TableHead>ms</TableHead>
+          <TableHead>Cache</TableHead>
+          <TableHead>Preview</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {logs.map((l) => (
+          <TableRow key={l.id}>
+            <TableCell className="font-mono">{l.created_at ? new Date(l.created_at + "Z").toLocaleString() : "—"}</TableCell>
+            {showEmail && <TableCell className="font-mono">{l.email || `#${l.user_id ?? "?"}`}</TableCell>}
+            <TableCell>
+              <code className="rounded border bg-background px-1.5 py-px font-mono text-xs">{l.policy || "—"}</code>
+            </TableCell>
+            <TableCell>
+              <span className="flex flex-wrap items-center gap-1.5">
+                {verdictChip(l.verdict)}
+                {l.error && <Badge variant="destructive">err {l.status_code}</Badge>}
+              </span>
+            </TableCell>
+            <TableCell className="font-mono">{l.confidence != null ? l.confidence.toFixed(2) : "—"}</TableCell>
+            <TableCell className="font-mono">{l.latency_ms.toFixed(0)}</TableCell>
+            <TableCell>{l.cache_hit ? "hit" : "miss"}</TableCell>
+            <TableCell className="font-mono">{l.state_preview.slice(0, 90)}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -114,10 +151,21 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
     let live = true;
     setLoading(true);
     fn().then(
-      (d) => { if (live) { setData(d); setErr(""); } },
-      (e: any) => { if (live) setErr(e?.message || "failed"); },
-    ).finally(() => { if (live) setLoading(false); });
-    return () => { live = false; };
+      (d) => {
+        if (live) {
+          setData(d);
+          setErr("");
+        }
+      },
+      (e: any) => {
+        if (live) setErr(e?.message || "failed");
+      }
+    ).finally(() => {
+      if (live) setLoading(false);
+    });
+    return () => {
+      live = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, nonce]);
   return { data, err, loading, reload: () => setNonce((n) => n + 1) };

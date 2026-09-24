@@ -267,7 +267,7 @@ function initLandingChrome(){
     if(t === "docs"){ show("docs"); return; }
     show(t, true);
   });
-  $$(".media-card[data-goto]").forEach(c => {
+  $$(".illus-lead[data-goto]").forEach(c => {
     c.addEventListener("keydown", e => { if(e.key==="Enter"||e.key===" "){ e.preventDefault(); show(c.dataset.goto, true); } });
   });
   // seamless marquee: duplicate track content once
@@ -294,12 +294,8 @@ function initLandingMotion(){
     if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     gsap.registerPlugin(ScrollTrigger);
     // hero entrance: fade + rise, expo.out
-    gsap.from(".hero-in > *", {y:34, opacity:0, duration:.9, ease:"expo.out", stagger:.12});
-    // image scale + fade on scroll
-    gsap.utils.toArray(".zoom-img img").forEach(img => {
-      gsap.fromTo(img, {scale:.82, opacity:.35}, {scale:1, opacity:1, ease:"none",
-        scrollTrigger:{trigger:img, start:"top bottom", end:"top 35%", scrub:true}});
-    });
+    gsap.from(".hero-copy > *", {y:34, opacity:0, duration:.9, ease:"expo.out", stagger:.12});
+    gsap.from(".hero-art", {y:44, opacity:0, duration:1.1, ease:"expo.out", delay:.15});
     // scrubbing word reveal
     const sc = $("#scrub");
     if(sc && !sc.dataset.split){

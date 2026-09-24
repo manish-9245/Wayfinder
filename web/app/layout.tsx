@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import SuperTokensProvider from "@/components/SuperTokensProvider";
-import Nav from "@/components/Nav";
+import SiteHeader from "@/components/site-header";
 import RouteFocus from "@/components/RouteFocus";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const display = Outfit({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-display", display: "swap" });
@@ -35,19 +37,25 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="dark" className={`${display.variable} ${mono.variable}`}>
-      <SuperTokensProvider>
-        <body>
-          <a className="skip" href="#main">Skip to main content</a>
-          <div className="grain" aria-hidden="true" />
-          <Nav />
-          <RouteFocus />
-          <main id="main" className="page" tabIndex={-1}>
-            {children}
-          </main>
-          <div className="toast" id="toast" role="status" aria-live="polite" />
-        </body>
-      </SuperTokensProvider>
+    <html lang="en" suppressHydrationWarning className={`${display.variable} ${mono.variable}`}>
+      <body>
+        <ThemeProvider>
+          <SuperTokensProvider>
+            <a
+              href="#main"
+              className="absolute -top-14 left-3 z-50 rounded-md border bg-secondary px-4 py-2.5 text-foreground transition-all focus:top-3"
+            >
+              Skip to main content
+            </a>
+            <SiteHeader />
+            <RouteFocus />
+            <main id="main" tabIndex={-1} className="w-full px-4 pb-16 pt-6 md:px-8">
+              {children}
+            </main>
+            <Toaster richColors closeButton />
+          </SuperTokensProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

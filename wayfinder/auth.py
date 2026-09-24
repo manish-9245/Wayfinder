@@ -9,7 +9,9 @@
 - Service keys: per-user `wf_…` API keys (sha256-hashed at rest) for curl /
   server-to-server use, plus the legacy WAYFINDER_API_KEY master bearer.
 - Inference endpoints accept (in order): master key → wf_ key → SuperTokens
-  session cookie → test backdoor → open (only when nothing is configured).
+  session cookie → test backdoor → open (only when nothing is configured AND
+  WAYFINDER_REQUIRE_AUTH=0). With WAYFINDER_REQUIRE_AUTH=1, anonymous callers
+  get 401 even on a bare dev instance.
 
 Super-admin = DB role `admin` OR email in WAYFINDER_SUPERADMINS OR
 SuperTokens UserRoles `admin` role. When SUPERTOKENS_ENABLED=0 (local dev
@@ -309,8 +311,9 @@ async def resolve_caller(request: Optional[Request], authorization: Optional[str
             return caller
     if token:
         raise HTTPException(status_code=401, detail="invalid or missing bearer token")
-    if supertokens_ready() or settings.api_key:
+    if supertokens_ready() or settings.api_key or settings.require_auth:
         # Auth is configured but nothing was supplied. Keep the legacy
-        # single-key behavior: 401. (Open dev instances leave both unset.)
-        raise HTTPException(status_code=401, detail="missing bearer token")
+        # single-key behavior: 401. (Open dev instances leave everything unset
+        # and WAYFINDER_REQUIRE_AUTH=0.)
+        raise HTTPException(status_code=401, detail="sign-in required — log in or send a wf_ API key")
     return Caller(auth_type="open")

@@ -36,6 +36,8 @@ async function bearer(getToken?: GetToken): Promise<string | null> {
   }
 }
 
+import { redirectToLogin } from "@/lib/login-redirect";
+
 async function call<T>(path: string, init: RequestInit = {}, getToken?: GetToken): Promise<T> {
   const token = await bearer(getToken);
   const r = await fetch(`/api${path}`, {
@@ -49,6 +51,11 @@ async function call<T>(path: string, init: RequestInit = {}, getToken?: GetToken
   });
   if (r.status === 204) return undefined as T;
   const j = await r.json().catch(() => ({}));
+  if (r.status === 401) {
+    redirectToLogin(
+      (j as any).detail || "Sign-in required — log in or add an API key from the dashboard to continue."
+    );
+  }
   if (!r.ok) throw new Error((j as any).detail || `request failed (${r.status})`);
   return j as T;
 }

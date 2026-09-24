@@ -9,6 +9,8 @@ export interface DecideResult {
   usage?: Record<string, number>;
 }
 
+import { redirectToLogin } from "@/lib/login-redirect";
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   let saved: string | null = null;
   try { saved = localStorage.getItem("wayfinder.key"); } catch { /* ssr/private */ }
@@ -16,6 +18,11 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   if (saved && !headers.authorization) headers.authorization = `Bearer ${saved}`;
   const r = await fetch(path, { ...init, headers });
   const j = await r.json().catch(() => ({}));
+  if (r.status === 401) {
+    redirectToLogin(
+      (j as any).detail || "Sign-in required — log in or add an API key from the dashboard to continue."
+    );
+  }
   if (!r.ok) throw new Error((j as any).detail || `request failed (${r.status})`);
   return j as T;
 }
@@ -36,7 +43,15 @@ export const api = {
   },
 };
 
+import { toast as sonner } from "sonner";
+
 export function toast(msg: string) {
+  try {
+    sonner.error(msg);
+    return;
+  } catch {
+    /* sonner unavailable (SSR) — fall back to the legacy toast node */
+  }
   const t = document.getElementById("toast");
   if (!t) return;
   t.textContent = msg;

@@ -3,6 +3,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, toast } from "@/lib/api";
 import { PolicyMark } from "@/components/illustrations";
+import { Spotlight } from "@/components/aceternity/spotlight";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PoliciesPage() {
   useEffect(() => { document.title = "Policies — wayfinder"; }, []);
@@ -17,21 +20,42 @@ export default function PoliciesPage() {
 
   return (
     <>
-      <div className="console-head"><h1 className="display">Policies.</h1>
-        <p className="mut">Questions plus thresholds. Select one to load it in the console.</p></div>
-      <div className="polgrid">
+      <div className="mb-4 mt-6">
+        <h1 className="text-4xl font-bold tracking-tight">Policies.</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Questions plus thresholds. Select one to load it in the console.</p>
+      </div>
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
         {Object.entries(names).map(([k, p]) => {
           const qs = (full[k]?.questions || {}) as Record<string, any>;
           return (
-            <Link key={k} className="card polcard" href={`/console?policy=${k}`} aria-label={`Use policy ${k} in console`}>
-              <div className="pol-top"><PolicyMark policy={k} size={44} /><h3>{k}</h3></div>
-              <div className="mut">{p.description}</div>
-              <div style={{ margin: "10px 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {Object.entries(qs).map(([qn, q]) => (
-                  <span key={qn} className={`badge t-${q.type}`}>{qn} · {q.type}</span>
-                ))}
-              </div>
-              <div className="mut mono">act ≥ {p.auto_act_above}{p.escalate_below != null ? ` · esc < ${p.escalate_below}` : ""}</div>
+            <Link key={k} href={`/console?policy=${k}`} aria-label={`Use policy ${k} in console`} className="no-underline">
+              <Spotlight className="h-full rounded-lg">
+              <Card className="h-full transition-colors hover:border-info">
+                <CardHeader className="flex-row items-center gap-3.5 space-y-0">
+                  <span className="grid size-11 shrink-0 place-items-center text-muted-foreground [&_svg]:size-full">
+                    <PolicyMark policy={k} size={44} />
+                  </span>
+                  <CardTitle className="break-all">{k}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{p.description}</CardDescription>
+                  <div className="my-2.5 flex flex-wrap gap-1.5">
+                    {Object.entries(qs).map(([qn, q]) => (
+                      <Badge
+                        key={qn}
+                        variant={q.type === "noul" ? "success" : "info"}
+                      >
+                        {qn} · {q.type}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    act ≥ {p.auto_act_above}
+                    {p.escalate_below != null ? ` · esc < ${p.escalate_below}` : ""}
+                  </p>
+                </CardContent>
+              </Card>
+              </Spotlight>
             </Link>
           );
         })}

@@ -40,16 +40,29 @@
 
   <!-- ============ HOME / LANDING ============ -->
   <section id="v-home" role="tabpanel" aria-labelledby="tab-home">
-    <div class="hero">
-      <div class="hero-bg" aria-hidden="true"></div>
-      <div class="hero-in">
-        <h1 class="display max-w-6xl">Every AI action deserves
-          <span class="h-pill" role="img" aria-label="a watchful model"></span>
-          a second opinion.</h1>
-        <p class="lede">wayfinder turns any text, in over a hundred languages, into a calibrated verdict — act, review, escalate, or block — in a single forward pass. No generation, no hallucination, nothing to parse.</p>
-        <div class="cta-row">
-          <button class="primary xl" data-goto="play">Open the console</button>
-          <button class="ghost xl" data-goto="docs">Read the docs</button>
+    <div class="hero asym">
+      <div class="hero-ambient" aria-hidden="true"></div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <h1 class="display">A second opinion for every action.</h1>
+          <p class="lede">wayfinder turns any text, in over a hundred languages, into a calibrated verdict — act, review, escalate, or block — in a single forward pass. No generation, no hallucination, nothing to parse.</p>
+          <div class="cta-row left">
+            <button class="primary xl" data-goto="play">Open the console</button>
+            <button class="ghost xl" data-goto="docs">Read the docs</button>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 240 200" class="art-main" focusable="false">
+            <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="120" cy="178" rx="72" ry="10" stroke-opacity=".35" />
+              <path d="M62 178V96a58 58 0 0 1 116 0v82" />
+              <path d="M78 178v-74a42 42 0 0 1 84 0v74" stroke-opacity=".45" />
+              <line x1="120" y1="70" x2="120" y2="150" stroke="#22C55E" stroke-width="2.5" />
+              <path d="M114.5 162l4 4 7.5-8.5" stroke="#22C55E" stroke-width="2" />
+            </g>
+          </svg>
+          <div class="chip ok">act · 0.89</div>
+          <div class="chip bad">block · 0.97</div>
         </div>
       </div>
     </div>
@@ -60,9 +73,15 @@
 
     <div class="chapter">
       <div class="bento">
-        <article class="bcard span-4 rows-2 media-card" data-goto="play" tabindex="0" role="button" aria-label="Try it in the console">
-          <img src="https://picsum.photos/seed/gateway/1200/800" alt="" loading="lazy">
-          <div class="media-veil" aria-hidden="true"></div>
+        <article class="bcard span-4 rows-2 illus-lead" data-goto="play" tabindex="0" role="button" aria-label="Try it in the console">
+          <svg viewBox="0 0 240 200" class="illus-bg" aria-hidden="true">
+            <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M62 178V96a58 58 0 0 1 116 0v82" />
+              <path d="M78 178v-74a42 42 0 0 1 84 0v74" stroke-opacity=".45" />
+              <line x1="120" y1="70" x2="120" y2="150" stroke="#22C55E" stroke-width="2.5" />
+              <path d="M114.5 162l4 4 7.5-8.5" stroke="#22C55E" stroke-width="2" />
+            </g>
+          </svg>
           <div class="media-copy"><h2 class="display">One call answers every question.</h2>
           <p>Department, urgency, churn, refund — scored together, routed by language before the model ever sees it.</p></div>
         </article>
@@ -83,7 +102,7 @@
           <div class="pcard"><div class="bignum display">0.081</div><p>Expected calibration error after fitting — down from 0.466 raw.</p></div>
           <div class="pcard"><div class="bignum display">45<span>/51</span></div><p>Languages clearing 3× random, routed automatically.</p></div>
           <div class="pcard"><div class="bignum display">7×</div><p>Faster than hosted LLM judges at a fraction of the cost — zero, in fact.</p></div>
-          <div class="pcard zoom-img"><img src="https://picsum.photos/seed/calibration/900/600" alt="" loading="lazy"><p>Confidence you can wire to automation.</p></div>
+          <div class="pcard"><div class="bignum display">1</div><p>Forward pass per decision. Confidence you can wire to automation.</p></div>
         </div>
       </div>
     </div>
@@ -110,7 +129,7 @@
         <button class="ghost xl" data-goto="batch">Score a batch</button>
       </div>
       <nav class="footlinks" aria-label="Footer">
-        <a href="#/docs">API reference</a><a href="#/docs">MCP server</a><a href="#/docs">Deploy guide</a><a href="/docs">OpenAPI</a><a href="https://huggingface.co/convaiinnovations/laya">Weights</a>
+        <a href="#/docs">API reference</a><a href="#/docs">MCP server</a><a href="#/docs">Deploy guide</a><a href="/docs">OpenAPI</a><a href="https://github.com/manish-9245/Wayfinder">GitHub</a>
       </nav>
     </div>
   </section>
@@ -175,7 +194,7 @@
     <p><button class="ghost" id="mrefresh">Refresh now</button> <span class="mut">auto-refreshes every 3s while open</span></p></div>
   </section>
 
-  <footer>Gateway over <a href="https://huggingface.co/convaiinnovations/laya">laya</a> · <a href="/docs">OpenAPI</a> · <a href="#top">Back to top</a></footer>
+  <footer>Wayfinder · <a href="/docs">OpenAPI</a> · <a href="https://github.com/manish-9245/Wayfinder">GitHub</a> · <a href="#top">Back to top</a></footer>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="/static/app.js" defer></script>

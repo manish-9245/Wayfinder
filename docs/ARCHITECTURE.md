@@ -2,17 +2,12 @@
 
 ![request path](architecture.svg)
 
-```
-any client ──▶  Wayfinder (this repo)  ──▶  laya (pip package)  ──▶  checkpoints
-  HTTP/MCP/TS      policies, cache,          Router, typed
-  LangGraph        verdict, metrics          answers
-```
-
 ## Why this shape
 
-- **Zero model code here.** All weights/forward passes live in the `laya`
-  pip package. Gate is glue: validation, policy thresholds, cache, auth,
-  observability. Upstream releases arrive via `pip install -U laya`.
+- **Zero model code in the request path.** Weights and forward passes live
+  in the managed model plane. The gateway is glue: validation, policy
+  thresholds, cache, auth, observability. Source and packaging live on
+  GitHub.
 - **Stateless = scalable.** Request carries everything (state, policy,
   overrides). No sessions, no sticky LBs. Replicas share nothing except
   optional Redis cache. Scale with container count, not threads.
@@ -29,8 +24,9 @@ any client ──▶  Wayfinder (this repo)  ──▶  laya (pip package)  ─�
 
 ## Request lifecycle
 
-1. Auth (timing-safe bearer iff `WAYFINDER_API_KEY` set) → body cap (413) →
-   state/question caps (422/413).
+1. Auth (session / `wf_…` key / master bearer; anonymous → 401) + per-IP
+   and per-identity rate limits → body cap (413) → state/question caps
+   (422/413).
 2. Policy resolve (YAML, loaded once at boot) + per-call threshold overrides.
 3. Cache lookup → HIT: return with `cache_hit:true`.
 4. MISS: `Router.predict` (outside any global lock. Router's own
@@ -47,8 +43,8 @@ any client ──▶  Wayfinder (this repo)  ──▶  laya (pip package)  ─�
 | Router not ready | 503 (readiness probes hold traffic until preload done) |
 | Bad question schema | 422 naming the policy/question and the fix |
 | Oversize body/state | 413 / 422 before tokenization (OOM guard) |
-| Redis down | Logged warning, local LRU continues (degraded, not down) |
-| Model download fails (first boot, offline) | 500 with cause, no crash; `/health` stays loading |
+| Redis down | `redis_errors` metric ticks, shared limits/cache fall back to local state (degraded, not down) |
+| Model weights unavailable (first boot, offline) | 500 with a generic detail, full cause in server logs; `/health` stays loading |
 
 ## What NOT to add here
 

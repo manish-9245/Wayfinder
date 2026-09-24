@@ -1,38 +1,44 @@
 "use client";
 import { signOut, useSessionContext } from "supertokens-auth-react/recipe/session";
 import { AUTH_OFF } from "@/lib/supertokens";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 function Authed() {
   const ctx = useSessionContext();
-  if (ctx.loading) return <span className="status" role="status">…</span>;
+  if (ctx.loading) return <Badge variant="secondary" role="status">…</Badge>;
   if (!ctx.doesSessionExist)
     return (
-      <a className="primary btn-link sm" href="/auth">Sign in</a>
+      <Button size="sm" asChild>
+        <a href="/auth">Sign in</a>
+      </Button>
     );
   return (
     <>
-      <a className="ghost btn-link sm" href="/dashboard">Account</a>
-      <button
+      <Button variant="outline" size="sm" asChild>
+        <a href="/dashboard">Account</a>
+      </Button>
+      <Button
         type="button"
-        className="ghost mini"
+        variant="ghost"
+        size="sm"
         onClick={async () => {
           await signOut();
           window.location.href = "/";
         }}
       >
         Sign out
-      </button>
+      </Button>
     </>
   );
 }
 
-/** Sign-in state when SuperTokens is configured, dev shortcut otherwise. */
 export function AuthSlot() {
   if (AUTH_OFF)
     return (
-      <a className="ghost btn-link sm" href="/dashboard" title="Auth disabled — local dev mode">
-        Dev mode
-      </a>
+      <Button variant="outline" size="sm" asChild title="Auth disabled — local dev mode">
+        <a href="/dashboard">Dev mode</a>
+      </Button>
     );
   return <Authed />;
 }
