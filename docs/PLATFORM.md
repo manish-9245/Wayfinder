@@ -76,6 +76,13 @@ or the SuperTokens UserRoles `admin` role.
   `WAYFINDER_API_URL` (internal gateway URL for the `/api/*` proxy),
   `NEXT_PUBLIC_WEBSITE_DOMAIN` (public web origin, inlined at build),
   `NEXT_PUBLIC_SITE_URL`. Leave `NEXT_PUBLIC_AUTH_DISABLED` unset.
+- Deploy with the CLI for deterministic source (learned the hard way):
+  - gateway: `railway up -s wayfinder` from the repo root (GitHub-triggered
+    builds can snapshot a stale commit).
+  - web: `railway up --path-as-root web -s wayfinder-web` from the repo root
+    (a bare `railway up` archives the repo root and builds the gateway image).
+- No SMTP is configured on the core: sign-up works, but password-reset
+  emails will not send until you add an SMTP server to SuperTokens.
 
 ## 4. API reference (platform)
 
