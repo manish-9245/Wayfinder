@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AuthSlot } from "./AuthState";
 
 const TABS = [
   ["/", "Home"],
@@ -10,6 +11,8 @@ const TABS = [
   ["/policies", "Policies"],
   ["/docs", "Docs"],
   ["/metrics", "Metrics"],
+  ["/dashboard", "Dashboard"],
+  ["/admin", "Admin"],
 ] as const;
 
 function ThemeControl() {
@@ -91,6 +94,7 @@ export default function Nav() {
           ))}
         </nav>
         <span className={`status ${ok ? "ok" : ""}`} role="status">{status}</span>
+        <AuthSlot />
         <ThemeControl />
       </div>
     </header>

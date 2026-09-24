@@ -54,6 +54,28 @@ class Settings:
     # --- misc ---
     policies_file: str = os.getenv("WAYFINDER_POLICIES", "wayfinder/policies.yaml")
     log_level: str = os.getenv("WAYFINDER_LOG_LEVEL", "info")
+    # --- platform: database (SQLite file by default, Postgres via DATABASE_URL) ---
+    database_url: str = os.getenv("WAYFINDER_DATABASE_URL", "") or os.getenv("DATABASE_URL", "") or "sqlite:///./data/wayfinder.db"
+    # --- platform: Clerk managed auth (no custom passwords) ---
+    clerk_enabled: bool = _env_bool("CLERK_ENABLED", bool(os.getenv("CLERK_JWKS_URL") or os.getenv("CLERK_SECRET_KEY")))
+    clerk_jwks_url: str = os.getenv("CLERK_JWKS_URL", "")
+    clerk_issuer: str = os.getenv("CLERK_ISSUER", "")
+    clerk_secret_key: str = os.getenv("CLERK_SECRET_KEY", "")
+    clerk_publishable_key: str = os.getenv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "") or os.getenv("CLERK_PUBLISHABLE_KEY", "")
+    superadmin_emails: str = os.getenv("WAYFINDER_SUPERADMINS", "")  # csv; always admin
+    # --- platform: rate limits (per minute) + monthly quotas by plan ---
+    rate_free_per_min: int = _env_int("WAYFINDER_RATE_FREE_PER_MIN", 60)
+    rate_pro_per_min: int = _env_int("WAYFINDER_RATE_PRO_PER_MIN", 600)
+    rate_enterprise_per_min: int = _env_int("WAYFINDER_RATE_ENTERPRISE_PER_MIN", 0)  # 0 = unlimited
+    rate_ip_per_min: int = _env_int("WAYFINDER_RATE_IP_PER_MIN", 120)
+    rate_admin_per_min: int = _env_int("WAYFINDER_RATE_ADMIN_PER_MIN", 0)  # 0 = unlimited
+    quota_free_monthly: int = _env_int("WAYFINDER_QUOTA_FREE", 10_000)
+    quota_pro_monthly: int = _env_int("WAYFINDER_QUOTA_PRO", 500_000)
+    quota_enterprise_monthly: int = _env_int("WAYFINDER_QUOTA_ENTERPRISE", 0)  # 0 = unlimited
+    # --- platform: request log retention ---
+    log_state_preview_chars: int = _env_int("WAYFINDER_LOG_PREVIEW_CHARS", 300)
+    # --- test/dev escape hatch (never enable in prod) ---
+    test_auth: bool = _env_bool("WAYFINDER_TEST_AUTH", False)
 
 
 settings = Settings()

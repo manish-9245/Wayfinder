@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import Nav from "@/components/Nav";
 import RouteFocus from "@/components/RouteFocus";
 import "./globals.css";
@@ -32,19 +33,24 @@ export const metadata: Metadata = {
   },
 };
 
+const CLERK_KEY = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const body = (
+    <body>
+      <a className="skip" href="#main">Skip to main content</a>
+      <div className="grain" aria-hidden="true" />
+      <Nav />
+      <RouteFocus />
+      <main id="main" className="page" tabIndex={-1}>
+        {children}
+      </main>
+      <div className="toast" id="toast" role="status" aria-live="polite" />
+    </body>
+  );
   return (
     <html lang="en" data-theme="dark" className={`${display.variable} ${mono.variable}`}>
-      <body>
-        <a className="skip" href="#main">Skip to main content</a>
-        <div className="grain" aria-hidden="true" />
-        <Nav />
-        <RouteFocus />
-        <main id="main" className="page" tabIndex={-1}>
-          {children}
-        </main>
-        <div className="toast" id="toast" role="status" aria-live="polite" />
-      </body>
+      {CLERK_KEY ? <ClerkProvider>{body}</ClerkProvider> : body}
     </html>
   );
 }

@@ -403,3 +403,34 @@ a.bcard h1,a.bcard h2,a.bcard h3,a.bcard p{text-decoration:none}
 
 /* rendered doc images (architecture diagram) */
 .doc-body img{max-width:100%;height:auto;border-radius:12px;border:1px solid var(--color-border);margin:12px 0}
+
+/* platform dashboards: auth, KPIs, tables, tabs */
+.auth-wrap{display:grid;place-items:center;padding:48px 16px}
+.dash-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
+.dash-head h1{font-size:28px;letter-spacing:-.02em;margin:0}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0}
+.toolbar input[type=text],.toolbar select{width:auto;min-width:0}
+.toolbar input[type=text]{flex:1;min-width:180px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.tabrow{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.tabrow button{background:none;border:1px solid var(--color-border-2);color:var(--color-text-3);
+  border-radius:10px;padding:10px 16px;min-height:44px;font-size:13.5px;font-weight:600;cursor:pointer}
+.tabrow button[aria-selected="true"]{background:var(--color-surface-2);color:var(--color-foreground);
+  box-shadow:inset 0 0 0 1px var(--color-border-2)}
+.copybox{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--color-background);
+  border:1px dashed var(--color-info);border-radius:10px;padding:12px 14px;margin:12px 0;font-family:var(--mono);font-size:13px}
+button.danger{background:none;border:1px solid var(--color-bad);color:var(--color-bad);border-radius:10px;
+  padding:8px 14px;min-height:40px;font-size:13px;font-weight:600;cursor:pointer}
+button.danger:hover{background:rgba(248,113,113,.1)}
+button.mini{background:var(--color-surface-2);border:1px solid var(--color-border-2);color:var(--color-foreground);
+  border-radius:8px;padding:6px 12px;min-height:36px;font-size:12.5px;font-weight:600;cursor:pointer}
+button.mini:hover{border-color:var(--color-info)}
+select.inline,input.inline{width:auto;padding:8px 10px;min-height:40px;font-size:13px}
+.chart{width:100%;height:120px;display:block}
+.vchip{display:inline-block;font:600 11px var(--mono);padding:2px 10px;border-radius:12px;border:1px solid var(--color-border-2)}
+.vchip.ok{color:var(--color-accent);border-color:var(--color-accent)}
+.vchip.warn{color:var(--color-warn);border-color:var(--color-warn)}
+.vchip.bad{color:var(--color-bad);border-color:var(--color-bad)}
+.vchip.mut{color:var(--color-text-3)}
+.pager{display:flex;gap:10px;align-items:center;margin:12px 0;font-size:13px;color:var(--color-text-3)}

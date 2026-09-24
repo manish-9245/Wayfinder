@@ -31,14 +31,17 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from wayfinder.auth import Caller, resolve_caller
 from wayfinder.config import settings
 from wayfinder.hooks import LRUCache, Timer, audit_line, cache_key, metrics_snapshot, record_request
 from wayfinder.policies import load_policies, verdict_for
+from wayfinder.routes_platform import admin_router, keys_router, me_router
 
 log = logging.getLogger("wayfinder")
 
@@ -133,6 +136,10 @@ async def lifespan(app: FastAPI):
     global ROUTER, POLICIES, REDIS
     import torch
 
+    from wayfinder.db import init_db
+
+    init_db()  # platform tables (users, keys, usage). No-op after first boot.
+
     if settings.threads:
         torch.set_num_threads(settings.threads)
         torch.set_num_interop_threads(settings.threads)
@@ -172,6 +179,10 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="wayfinder", version="0.1.0", lifespan=lifespan,
               description="Universal doubt layer: one policy call, calibrated act/escalate/block verdict.")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+app.include_router(keys_router)
+app.include_router(me_router)
+app.include_router(admin_router)
 
 _UI_DIR = Path(__file__).parent.parent / "ui"
 if _UI_DIR.exists():
@@ -182,6 +193,86 @@ def _router() -> Any:
     if ROUTER is None:
         raise HTTPException(status_code=503, detail="router not ready")
     return ROUTER
+
+
+# --------------------------------------------------------------------------- #
+# platform: caller snapshot + persistent usage log
+# --------------------------------------------------------------------------- #
+
+class _Ctx:
+    """Detached identity snapshot (safe to hold after the DB session closes)."""
+    __slots__ = ("user_id", "key_prefix", "auth_type")
+    user_id: Optional[int]
+    key_prefix: Optional[str]
+    auth_type: str
+
+
+def _platform_ctx(request: Request, authorization: Optional[str]) -> _Ctx:
+    """Resolve caller (master bearer / Clerk JWT / wf_ key / open dev), then
+    enforce per-IP + per-identity rate limits and monthly quota. Raises
+    401/403/429 exactly where the legacy bearer guard used to raise."""
+    from wayfinder import db as dbmod
+    from wayfinder.ratelimit import enforce_quota, enforce_rate_limit
+
+    db = dbmod.SessionLocal()
+    try:
+        ip = request.client.host if request.client else ""
+        caller: Caller = resolve_caller(authorization, db, ip)
+        enforce_rate_limit(request, caller)
+        if caller.user is not None:
+            if not caller.user.is_active:
+                raise HTTPException(status_code=403, detail="account disabled")
+            enforce_quota(db, caller.user)
+        ctx = _Ctx()
+        ctx.user_id = caller.user.id if caller.user is not None else None
+        ctx.key_prefix = caller.key_prefix
+        ctx.auth_type = caller.auth_type
+        return ctx
+    finally:
+        db.close()
+
+
+def _record(ctx: Optional[_Ctx], request: Request, *, policy: str, verdict: str = "",
+            confidence: Optional[float] = None, latency_ms: float = 0.0,
+            cache_hit: bool = False, blocked: bool = False, error: bool = False,
+            status_code: int = 200, state: Any = "") -> None:
+    """Best-effort persistent log. Never breaks inference if the DB is down."""
+    try:
+        from wayfinder import db as dbmod
+        from wayfinder import usage as usage_store
+
+        db = dbmod.SessionLocal()
+        try:
+            usage_store.log_usage(
+                db, user_id=ctx.user_id if ctx else None, key_prefix=ctx.key_prefix if ctx else None,
+                policy=policy, verdict=verdict, confidence=confidence, latency_ms=latency_ms,
+                cache_hit=cache_hit, blocked=blocked, error=error, status_code=status_code,
+                ip=request.client.host if request.client else "", state=state)
+        finally:
+            db.close()
+    except Exception as exc:  # logging must never fail the request
+        log.warning("usage log failed (%s)", exc)
+
+
+def _log_rejection(request: Request, authorization: Optional[str], policy: str, status_code: int, state: Any = "") -> None:
+    """Best-effort row for 401/429 rejections (identity resolved, limits skipped)."""
+    try:
+        from wayfinder import db as dbmod
+
+        db = dbmod.SessionLocal()
+        try:
+            caller = resolve_caller(authorization, db, request.client.host if request.client else "")
+            ctx = _Ctx()
+            ctx.user_id = caller.user.id if caller.user is not None else None
+            ctx.key_prefix = caller.key_prefix
+            ctx.auth_type = caller.auth_type
+        except Exception:
+            ctx = None
+        finally:
+            db.close()
+        _record(ctx, request, policy=policy, error=True, status_code=status_code, state=state)
+    except Exception:
+        pass
 
 
 async def _cached_predict(state: Any, questions: Dict[str, Any], *, model=None, task=None, lang=None) -> tuple[Dict[str, Any], bool]:
@@ -264,75 +355,142 @@ def docs_file(name: str):
 
 
 @app.post("/v1/decide/{policy}")
-async def decide(policy: str, req: DecideRequest,
-                 _: None = Depends(require_auth), __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
+async def decide(policy: str, req: DecideRequest, request: Request,
+                 authorization: Optional[str] = Header(default=None),
+                 __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
+    try:
+        ctx = _platform_ctx(request, authorization)
+    except HTTPException as exc:
+        _log_rejection(request, authorization, policy, exc.status_code, req.state)
+        record_request(0, error=True)
+        raise
     pol = _policy_or_422(policy)
     eff = dict(pol)
     for k in ("auto_act_above", "escalate_below"):
         if k in (req.options or {}):
             eff[k] = req.options[k]
     questions = eff["questions"]
-    check_state(req.state, questions)
+    try:
+        check_state(req.state, questions)
+    except HTTPException as exc:
+        _record(ctx, request, policy=policy, error=True, status_code=exc.status_code, state=req.state)
+        record_request(0, error=True)
+        raise
     with Timer() as t:
         try:
             res, hit = await _cached_predict(req.state, questions, model=req.model, task=req.task, lang=req.lang)
         except (KeyError, ValueError) as exc:
+            _record(ctx, request, policy=policy, error=True, status_code=422, state=req.state)
             record_request(0, error=True)
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
+            _record(ctx, request, policy=policy, error=True, status_code=500, state=req.state)
             record_request(0, error=True)
             raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
     out = _with_verdict(policy, eff, res, t.ms)
     out["cache_hit"] = hit
     record_request(t.ms, cache_hit=hit, blocked=out["verdict"]["verdict"] == "block")
+    _record(ctx, request, policy=policy, verdict=out["verdict"]["verdict"],
+            confidence=out["verdict"].get("confidence"), latency_ms=t.ms,
+            cache_hit=hit, blocked=out["verdict"]["verdict"] == "block", state=req.state)
     return out
 
 
 @app.post("/v1/systemone")
-async def systemone(payload: Dict[str, Any], _: None = Depends(require_auth),
+async def systemone(payload: Dict[str, Any], request: Request,
+                    authorization: Optional[str] = Header(default=None),
                     __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
     """Jev-compatible entry: {"state", "questions", "model"?} -> laya result.
 
     Existing Jev clients repoint baseUrl here; nothing else changes.
     """
     state, questions = payload.get("state"), payload.get("questions")
+    try:
+        ctx = _platform_ctx(request, authorization)
+    except HTTPException as exc:
+        _log_rejection(request, authorization, "", exc.status_code, state or "")
+        record_request(0, error=True)
+        raise
     if not state or not questions:
+        _record(ctx, request, policy="", error=True, status_code=422, state=state or "")
         raise HTTPException(status_code=422, detail="needs {state, questions}")
-    check_state(state, questions)
+    try:
+        check_state(state, questions)
+    except HTTPException as exc:
+        _record(ctx, request, policy="", error=True, status_code=exc.status_code, state=state)
+        raise
     with Timer() as t:
         try:
             res, hit = await _cached_predict(state, questions, model=payload.get("model"),
                                              task=payload.get("task"), lang=payload.get("lang"))
         except (KeyError, ValueError) as exc:
+            _record(ctx, request, policy="", error=True, status_code=422, state=state)
             record_request(0, error=True)
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         except Exception as exc:
+            _record(ctx, request, policy="", error=True, status_code=500, state=state)
             record_request(0, error=True)
             raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
     res["cache_hit"] = hit
     record_request(t.ms, cache_hit=hit)
+    _record(ctx, request, policy="", latency_ms=t.ms, cache_hit=hit, state=state)
     return res
 
 
 @app.post("/predict")
-async def predict(req: RawPredictRequest, _: None = Depends(require_auth),
+async def predict(req: RawPredictRequest, request: Request,
+                  authorization: Optional[str] = Header(default=None),
                   __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
-    check_state(req.state, req.questions)
+    try:
+        ctx = _platform_ctx(request, authorization)
+    except HTTPException as exc:
+        _log_rejection(request, authorization, "", exc.status_code, req.state)
+        record_request(0, error=True)
+        raise
+    try:
+        check_state(req.state, req.questions)
+    except HTTPException as exc:
+        _record(ctx, request, policy="", error=True, status_code=exc.status_code, state=req.state)
+        raise
     with Timer() as t:
-        res, hit = await _cached_predict(req.state, req.questions, model=req.model, task=req.task, lang=req.lang)
+        try:
+            res, hit = await _cached_predict(req.state, req.questions, model=req.model, task=req.task, lang=req.lang)
+        except (KeyError, ValueError) as exc:
+            _record(ctx, request, policy="", error=True, status_code=422, state=req.state)
+            record_request(0, error=True)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except Exception as exc:
+            _record(ctx, request, policy="", error=True, status_code=500, state=req.state)
+            record_request(0, error=True)
+            raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
     res["cache_hit"] = hit
     record_request(t.ms, cache_hit=hit)
+    _record(ctx, request, policy="", latency_ms=t.ms, cache_hit=hit, state=req.state)
     return res
 
 
 @app.post("/predict/batch")
-async def predict_batch(req: BatchRequest, _: None = Depends(require_auth)) -> Dict[str, Any]:
+async def predict_batch(req: BatchRequest, request: Request,
+                        authorization: Optional[str] = Header(default=None)) -> Dict[str, Any]:
     questions = req.questions
+    policy_name = req.policy or ""
+    try:
+        ctx = _platform_ctx(request, authorization)
+    except HTTPException as exc:
+        _log_rejection(request, authorization, policy_name, exc.status_code)
+        record_request(0, error=True)
+        raise
     if req.policy:
-        questions = _policy_or_422(req.policy)["questions"]
+        try:
+            questions = _policy_or_422(req.policy)["questions"]
+        except HTTPException as exc:
+            _record(ctx, request, policy=policy_name, error=True, status_code=exc.status_code)
+            raise
     if not questions:
+        _record(ctx, request, policy=policy_name, error=True, status_code=422)
         raise HTTPException(status_code=422, detail="supply questions or a policy")
     if len(req.states) > 128:
+        _record(ctx, request, policy=policy_name, error=True, status_code=413)
         raise HTTPException(status_code=413, detail="max 128 states per batch call")
     # Fast path: one shared Router.predict_batch when nothing is cached.
     # Cache-aware path would break batching; for mixed hit/miss workloads the
@@ -359,6 +517,8 @@ async def predict_batch(req: BatchRequest, _: None = Depends(require_auth)) -> D
                 CACHE.set(cache_key(req.states[idx], questions, req.model), res)
                 results[idx] = {**res, "cache_hit": False}
     record_request(t.ms)
+    _record(ctx, request, policy=policy_name, latency_ms=t.ms,
+            state=f"batch count={len(results)}")
     return {"count": len(results), "results": results}
 
 

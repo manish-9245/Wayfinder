@@ -10,7 +10,11 @@ export interface DecideResult {
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(path, { ...init, headers: { "content-type": "application/json", ...(init?.headers || {}) } });
+  let saved: string | null = null;
+  try { saved = localStorage.getItem("wayfinder.key"); } catch { /* ssr/private */ }
+  const headers: Record<string, string> = { "content-type": "application/json", ...(init?.headers as any || {}) };
+  if (saved && !headers.authorization) headers.authorization = `Bearer ${saved}`;
+  const r = await fetch(path, { ...init, headers });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error((j as any).detail || `request failed (${r.status})`);
   return j as T;

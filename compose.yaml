@@ -11,10 +11,22 @@ services:
       LAYA_THREADS: "${LAYA_THREADS:-4}"
       WAYFINDER_API_KEY: "${WAYFINDER_API_KEY:-}"
       WAYFINDER_REDIS_URL: "${WAYFINDER_REDIS_URL:-redis://redis:6379/0}"
+      DATABASE_URL: "${DATABASE_URL:-sqlite:///./data/wayfinder.db}"
+      CLERK_ENABLED: "${CLERK_ENABLED:-0}"
+      CLERK_JWKS_URL: "${CLERK_JWKS_URL:-}"
+      CLERK_ISSUER: "${CLERK_ISSUER:-}"
+      CLERK_SECRET_KEY: "${CLERK_SECRET_KEY:-}"
+      WAYFINDER_SUPERADMINS: "${WAYFINDER_SUPERADMINS:-}"
+      WAYFINDER_RATE_FREE_PER_MIN: "${WAYFINDER_RATE_FREE_PER_MIN:-60}"
+      WAYFINDER_RATE_PRO_PER_MIN: "${WAYFINDER_RATE_PRO_PER_MIN:-600}"
+      WAYFINDER_RATE_IP_PER_MIN: "${WAYFINDER_RATE_IP_PER_MIN:-120}"
+      WAYFINDER_QUOTA_FREE: "${WAYFINDER_QUOTA_FREE:-10000}"
+      WAYFINDER_QUOTA_PRO: "${WAYFINDER_QUOTA_PRO:-500000}"
     depends_on:
       - redis
     volumes:
       - model-cache:/root/.cache/huggingface
+      - app-data:/app/data
     init: true
     deploy:
       resources:
@@ -26,19 +38,37 @@ services:
     volumes:
       - redis-data:/data
 
+  # Optional Postgres for production. Compose sets DATABASE_URL to it when
+  # you uncomment; local dev stays on the SQLite file in app-data.
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: wayfinder
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-postgres}"
+  #   volumes:
+  #     - pg-data:/var/lib/postgresql/data
+
   web:
     build:
       context: ./web
       args:
         WAYFINDER_API_URL: "${WAYFINDER_API_URL:-http://wayfinder:8000}"
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}"
+        NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}"
     ports:
       - "${WEB_PORT:-3000}:3000"
     environment:
       WAYFINDER_API_URL: "http://wayfinder:8000"
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}"
+      CLERK_SECRET_KEY: "${CLERK_SECRET_KEY:-}"
+      NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}"
     depends_on:
-      - gate
+      - wayfinder
     init: true
 
 volumes:
   model-cache:
   redis-data:
+  app-data:
+  # pg-data:
