@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { toast } from "@/lib/api";
-import { DailyChart, Kpis, LogsTable, PolicyBars, platform, useAsync, usePlatform } from "@/components/dash";
+import { DailyChart, Kpis, LogsTable, PolicyBars, RequireAuth, platform, useAsync, usePlatform } from "@/components/dash";
 
 type Tab = "overview" | "users" | "keys" | "logs" | "system";
 const PAGE = 25;
@@ -25,6 +25,7 @@ export default function AdminPage() {
     );
 
   return (
+    <RequireAuth>
     <>
       <div className="dash-head">
         <h1>Admin</h1>
@@ -41,6 +42,7 @@ export default function AdminPage() {
       {tab === "logs" && <Logs getToken={getToken} />}
       {tab === "system" && <System getToken={getToken} />}
     </>
+    </RequireAuth>
   );
 }
 
@@ -236,7 +238,7 @@ function System({ getToken }: { getToken: any }) {
     ["Cache entries", String(s.cache_entries)],
     ["Redis shared cache", s.redis ? "connected" : "local LRU only"],
     ["Database", s.db ? "ok" : "DOWN"],
-    ["Clerk auth", s.clerk_enabled ? "enabled" : "disabled (dev-admin mode)"],
+    ["Auth", `${s.auth_provider ?? "supertokens"} · ${s.auth_enabled ? "enabled" : "disabled (dev-admin mode)"}`],
   ];
   return (
     <>

@@ -1,7 +1,7 @@
 """Platform tests: API keys, RBAC, rate limits, quotas, usage/logs, admin.
 
 Isolated: rebinds wayfinder.db.SessionLocal to a tmp SQLite file and enables
-WAYFINDER_TEST_AUTH (test-user / test-admin bearers). No Clerk, no torch.
+WAYFINDER_TEST_AUTH (test-user / test-admin bearers). No core, no torch.
 """
 
 import pytest
@@ -28,7 +28,7 @@ def client(tmp_path, monkeypatch):
 
     Base.metadata.create_all(bind=engine)
     monkeypatch.setattr(settings, "test_auth", True)
-    monkeypatch.setattr(settings, "clerk_enabled", False)
+    monkeypatch.setattr(settings, "supertokens_enabled", False)
     monkeypatch.setattr(settings, "api_key", "")
     appmod.ROUTER = StubRouter()
     appmod.POLICIES = load_policies("wayfinder/policies.yaml")

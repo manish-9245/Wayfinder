@@ -37,7 +37,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from wayfinder.auth import Caller, resolve_caller
+from wayfinder.auth import Caller, resolve_caller, supertokens_ready
 from wayfinder.config import settings
 from wayfinder.hooks import LRUCache, Timer, audit_line, cache_key, metrics_snapshot, record_request
 from wayfinder.policies import load_policies, verdict_for
@@ -138,7 +138,19 @@ async def lifespan(app: FastAPI):
 
     from wayfinder.db import init_db
 
-    init_db()  # platform tables (users, keys, usage). No-op after first boot.
+    for attempt in range(5):  # Postgres may still be waking up on first deploy
+        try:
+            init_db()  # platform tables (users, keys, usage). No-op after first boot.
+            break
+        except Exception as exc:
+            if attempt == 4:
+                # Inference still serves (usage logging is best-effort);
+                # platform routes 500 until the DB is reachable.
+                log.warning("init_db failed after retries (%s); continuing degraded", exc)
+            else:
+                import time as _time
+
+                _time.sleep(2)
 
     if settings.threads:
         torch.set_num_threads(settings.threads)
@@ -179,7 +191,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="wayfinder", version="0.1.0", lifespan=lifespan,
               description="Universal doubt layer: one policy call, calibrated act/escalate/block verdict.")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+if settings.supertokens_enabled:
+    # Cross-domain dashboard (web/ ≠ gateway host): explicit origin +
+    # credentials, otherwise browsers drop the session cookies.
+    from supertokens_python.framework.fastapi import get_middleware
+
+    app.add_middleware(get_middleware())
+    app.add_middleware(CORSMiddleware, allow_origins=[settings.supertokens_website_domain],
+                       allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+else:
+    app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.include_router(keys_router)
 app.include_router(me_router)
 app.include_router(admin_router)
@@ -207,8 +228,8 @@ class _Ctx:
     auth_type: str
 
 
-def _platform_ctx(request: Request, authorization: Optional[str]) -> _Ctx:
-    """Resolve caller (master bearer / Clerk JWT / wf_ key / open dev), then
+async def _platform_ctx(request: Request, authorization: Optional[str]) -> _Ctx:
+    """Resolve caller (master bearer / wf_ key / SuperTokens session / open dev), then
     enforce per-IP + per-identity rate limits and monthly quota. Raises
     401/403/429 exactly where the legacy bearer guard used to raise."""
     from wayfinder import db as dbmod
@@ -217,12 +238,17 @@ def _platform_ctx(request: Request, authorization: Optional[str]) -> _Ctx:
     db = dbmod.SessionLocal()
     try:
         ip = request.client.host if request.client else ""
-        caller: Caller = resolve_caller(authorization, db, ip)
+        caller: Caller = await resolve_caller(request, authorization, db, ip)
         enforce_rate_limit(request, caller)
         if caller.user is not None:
             if not caller.user.is_active:
                 raise HTTPException(status_code=403, detail="account disabled")
-            enforce_quota(db, caller.user)
+            try:
+                enforce_quota(db, caller.user)
+            except HTTPException:
+                raise
+            except Exception as exc:  # quota is best-effort; never fail inference on DB trouble
+                log.warning("quota check failed (%s)", exc)
         ctx = _Ctx()
         ctx.user_id = caller.user.id if caller.user is not None else None
         ctx.key_prefix = caller.key_prefix
@@ -254,14 +280,15 @@ def _record(ctx: Optional[_Ctx], request: Request, *, policy: str, verdict: str 
         log.warning("usage log failed (%s)", exc)
 
 
-def _log_rejection(request: Request, authorization: Optional[str], policy: str, status_code: int, state: Any = "") -> None:
+async def _log_rejection(request: Request, authorization: Optional[str], policy: str, status_code: int, state: Any = "") -> None:
     """Best-effort row for 401/429 rejections (identity resolved, limits skipped)."""
     try:
         from wayfinder import db as dbmod
 
         db = dbmod.SessionLocal()
         try:
-            caller = resolve_caller(authorization, db, request.client.host if request.client else "")
+            caller = await resolve_caller(request, authorization, db,
+                                          request.client.host if request.client else "")
             ctx = _Ctx()
             ctx.user_id = caller.user.id if caller.user is not None else None
             ctx.key_prefix = caller.key_prefix
@@ -359,9 +386,9 @@ async def decide(policy: str, req: DecideRequest, request: Request,
                  authorization: Optional[str] = Header(default=None),
                  __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
     try:
-        ctx = _platform_ctx(request, authorization)
+        ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
-        _log_rejection(request, authorization, policy, exc.status_code, req.state)
+        await _log_rejection(request, authorization, policy, exc.status_code, req.state)
         record_request(0, error=True)
         raise
     pol = _policy_or_422(policy)
@@ -406,9 +433,9 @@ async def systemone(payload: Dict[str, Any], request: Request,
     """
     state, questions = payload.get("state"), payload.get("questions")
     try:
-        ctx = _platform_ctx(request, authorization)
+        ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
-        _log_rejection(request, authorization, "", exc.status_code, state or "")
+        await _log_rejection(request, authorization, "", exc.status_code, state or "")
         record_request(0, error=True)
         raise
     if not state or not questions:
@@ -442,9 +469,9 @@ async def predict(req: RawPredictRequest, request: Request,
                   authorization: Optional[str] = Header(default=None),
                   __: None = Depends(enforce_body_cap)) -> Dict[str, Any]:
     try:
-        ctx = _platform_ctx(request, authorization)
+        ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
-        _log_rejection(request, authorization, "", exc.status_code, req.state)
+        await _log_rejection(request, authorization, "", exc.status_code, req.state)
         record_request(0, error=True)
         raise
     try:
@@ -475,9 +502,9 @@ async def predict_batch(req: BatchRequest, request: Request,
     questions = req.questions
     policy_name = req.policy or ""
     try:
-        ctx = _platform_ctx(request, authorization)
+        ctx = await _platform_ctx(request, authorization)
     except HTTPException as exc:
-        _log_rejection(request, authorization, policy_name, exc.status_code)
+        await _log_rejection(request, authorization, policy_name, exc.status_code)
         record_request(0, error=True)
         raise
     if req.policy:

@@ -1,20 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
-import { CLERK_ON } from "./AuthState";
+import { SessionAuth } from "supertokens-auth-react/recipe/session";
+import { AUTH_OFF } from "@/lib/supertokens";
 import { platform, type GetToken, type LogRow } from "@/lib/platform";
 
-/** Binds platform calls to the Clerk session (or saved key / open dev). */
+/** Session cookies authenticate; getToken stays for API-compat (wf_ keys). */
 export function usePlatform() {
-  const auth = CLERK_ON ? useAuth() : null;
-  const getToken: GetToken = async () => {
-    try {
-      return (await auth?.getToken()) ?? null;
-    } catch {
-      return null;
-    }
-  };
-  return { getToken, signedIn: CLERK_ON ? !!auth?.userId : true };
+  const getToken: GetToken = async () => null;
+  return { getToken };
+}
+
+/** Bounces signed-out visitors to /auth (skipped in keyless dev mode). */
+export function RequireAuth({ children }: { children: React.ReactNode }) {
+  if (AUTH_OFF) return <>{children}</>;
+  return <SessionAuth>{children}</SessionAuth>;
 }
 
 export function Kpis({ items }: { items: { k: string; n: string }[] }) {

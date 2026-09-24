@@ -92,8 +92,9 @@ MCP clients (Claude Desktop, Cursor): `pip install -e ".[mcp]"`, then
 
 Beyond stateless inference, the gateway ships a full platform layer:
 
-- **Managed auth** via [Clerk](https://clerk.com) (email, OAuth, MFA — zero
-  passwords in this repo); keyless `dev-admin` mode when unconfigured.
+- **Managed auth** via self-hosted [SuperTokens](https://supertokens.com)
+  (email/password + optional Google/GitHub OAuth — zero passwords in this repo);
+  keyless `dev-admin` mode when unconfigured.
 - **Service tokens**: per-user `wf_…` API keys, hashed at rest, shown once,
   revocable from `/dashboard` or `DELETE /v1/keys/{prefix}`.
 - **Per-user metrics & logs**: `/dashboard` shows requests, hit rate, p95,
@@ -107,14 +108,15 @@ Beyond stateless inference, the gateway ships a full platform layer:
 Quick start: create a key and call the API with it —
 
 ```bash
-curl -X POST localhost:8000/v1/keys -H "Authorization: Bearer <clerk-jwt>" \
+curl -X POST localhost:8000/v1/keys -H "Cookie: ..." \
   -H 'content-type: application/json' -d '{"name":"prod"}'
-# -> {"key":"wf_...","prefix":"wf_..."}  (raw shown ONCE)
+# -> {"key":"wf_...","prefix":"wf_..."}  (raw shown ONCE; sign in at /auth first,
+#    or pass Authorization: Bearer <wf-key> when you already have one)
 curl localhost:8000/v1/decide/support_inbound -H "Authorization: Bearer wf_..." \
   -H 'content-type: application/json' -d '{"state":{"body":"refund pls"}}'
 ```
 
-Full runbook (Clerk setup, Railway deploy, platform API, limits): [`docs/PLATFORM.md`](docs/PLATFORM.md).
+Full runbook (SuperTokens setup, Railway deploy, platform API, limits): [`docs/PLATFORM.md`](docs/PLATFORM.md).
 
 ## Production
 

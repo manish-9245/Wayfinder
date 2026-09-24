@@ -56,12 +56,17 @@ class Settings:
     log_level: str = os.getenv("WAYFINDER_LOG_LEVEL", "info")
     # --- platform: database (SQLite file by default, Postgres via DATABASE_URL) ---
     database_url: str = os.getenv("WAYFINDER_DATABASE_URL", "") or os.getenv("DATABASE_URL", "") or "sqlite:///./data/wayfinder.db"
-    # --- platform: Clerk managed auth (no custom passwords) ---
-    clerk_enabled: bool = _env_bool("CLERK_ENABLED", bool(os.getenv("CLERK_JWKS_URL") or os.getenv("CLERK_SECRET_KEY")))
-    clerk_jwks_url: str = os.getenv("CLERK_JWKS_URL", "")
-    clerk_issuer: str = os.getenv("CLERK_ISSUER", "")
-    clerk_secret_key: str = os.getenv("CLERK_SECRET_KEY", "")
-    clerk_publishable_key: str = os.getenv("NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "") or os.getenv("CLERK_PUBLISHABLE_KEY", "")
+    # --- platform: SuperTokens managed auth (self-hosted core, no passwords here) ---
+    supertokens_enabled: bool = _env_bool("SUPERTOKENS_ENABLED", False)
+    supertokens_connection_uri: str = os.getenv("SUPERTOKENS_CONNECTION_URI", "http://localhost:3568")
+    supertokens_api_key: str = os.getenv("SUPERTOKENS_API_KEY", "")
+    supertokens_api_domain: str = os.getenv("SUPERTOKENS_API_DOMAIN", "http://127.0.0.1:8000")
+    supertokens_website_domain: str = os.getenv("SUPERTOKENS_WEBSITE_DOMAIN", "http://localhost:3000")
+    # OAuth clients (optional; provider is skipped when its pair is unset).
+    google_client_id: str = os.getenv("THIRD_PARTY_GOOGLE_CLIENT_ID", "")
+    google_client_secret: str = os.getenv("THIRD_PARTY_GOOGLE_CLIENT_SECRET", "")
+    github_client_id: str = os.getenv("THIRD_PARTY_GITHUB_CLIENT_ID", "")
+    github_client_secret: str = os.getenv("THIRD_PARTY_GITHUB_CLIENT_SECRET", "")
     superadmin_emails: str = os.getenv("WAYFINDER_SUPERADMINS", "")  # csv; always admin
     # --- platform: rate limits (per minute) + monthly quotas by plan ---
     rate_free_per_min: int = _env_int("WAYFINDER_RATE_FREE_PER_MIN", 60)

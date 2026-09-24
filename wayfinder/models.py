@@ -1,8 +1,8 @@
-"""Platform tables: users (mirrored from Clerk), API keys, request logs.
+"""Platform tables: users (mirrored from SuperTokens), API keys, request logs.
 
-Users are provisioned on first sight from a verified Clerk session — the DB
-never stores passwords. API keys are `wf_…` random secrets; only a sha256
-hash is stored, the raw secret is shown once at creation.
+Users are provisioned on first sight from a verified SuperTokens session —
+the DB never stores passwords. API keys are `wf_…` random secrets; only a
+sha256 hash is stored, the raw secret is shown once at creation.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    clerk_id: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True, index=True)
+    external_id: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True, index=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     role: Mapped[str] = mapped_column(String(16), default=ROLE_USER, index=True)
     plan: Mapped[str] = mapped_column(String(16), default=PLAN_FREE, index=True)

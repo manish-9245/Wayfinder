@@ -1,9 +1,9 @@
 """Platform API: API keys, self-service usage/logs, super-admin console.
 
-Auth: Clerk session JWT (or wf_ key for /v1/me + /v1/keys reads). When
-CLERK_ENABLED=0 a dev-admin is auto-provisioned so local dashboards work.
-Every route here requires an authenticated user; /v1/admin/* additionally
-requires role == admin.
+Auth: SuperTokens session cookie (or wf_ key for /v1/me + /v1/keys reads).
+When SUPERTOKENS_ENABLED=0 a dev-admin is auto-provisioned so local
+dashboards work. Every route here requires an authenticated user; /v1/admin/*
+additionally requires role == admin.
 """
 
 from __future__ import annotations
@@ -233,7 +233,8 @@ def system(admin: User = Depends(require_admin)):
             "cache_entries": len(appmod.CACHE),
             "redis": appmod.REDIS is not None,
             "db": _db_ok(),
-            "clerk_enabled": settings.clerk_enabled,
+            "auth_provider": "supertokens",
+            "auth_enabled": settings.supertokens_enabled,
             "limits_per_min": {"free": settings.rate_free_per_min, "pro": settings.rate_pro_per_min,
                                "enterprise": settings.rate_enterprise_per_min or "unlimited",
                                "ip": settings.rate_ip_per_min,

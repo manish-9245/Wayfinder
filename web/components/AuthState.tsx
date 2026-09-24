@@ -1,27 +1,36 @@
 "use client";
-import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
-
-export const CLERK_ON =
-  typeof process !== "undefined" &&
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+import { signOut, useSessionContext } from "supertokens-auth-react/recipe/session";
+import { AUTH_OFF } from "@/lib/supertokens";
 
 function Authed() {
-  const { isLoaded, isSignedIn } = useUser();
-  if (!isLoaded) return <span className="status" role="status">…</span>;
-  if (!isSignedIn)
+  const ctx = useSessionContext();
+  if (ctx.loading) return <span className="status" role="status">…</span>;
+  if (!ctx.doesSessionExist)
     return (
-      <SignInButton mode="modal">
-        <button type="button" className="primary btn-link sm">Sign in</button>
-      </SignInButton>
+      <a className="primary btn-link sm" href="/auth">Sign in</a>
     );
-  return <UserButton afterSignOutUrl="/" />;
+  return (
+    <>
+      <a className="ghost btn-link sm" href="/dashboard">Account</a>
+      <button
+        type="button"
+        className="ghost mini"
+        onClick={async () => {
+          await signOut();
+          window.location.href = "/";
+        }}
+      >
+        Sign out
+      </button>
+    </>
+  );
 }
 
-/** Sign-in button when Clerk is configured, dev shortcut otherwise. */
+/** Sign-in state when SuperTokens is configured, dev shortcut otherwise. */
 export function AuthSlot() {
-  if (!CLERK_ON)
+  if (AUTH_OFF)
     return (
-      <a className="ghost btn-link sm" href="/dashboard" title="Clerk not configured — local dev mode">
+      <a className="ghost btn-link sm" href="/dashboard" title="Auth disabled — local dev mode">
         Dev mode
       </a>
     );

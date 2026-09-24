@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toast } from "@/lib/api";
 import { saveKeyForConsole } from "@/lib/platform";
-import { DailyChart, Kpis, LogsTable, PolicyBars, platform, useAsync, usePlatform } from "@/components/dash";
+import { DailyChart, Kpis, LogsTable, PolicyBars, RequireAuth, platform, useAsync, usePlatform } from "@/components/dash";
 
 const PAGE = 25;
 
@@ -57,6 +57,7 @@ export default function DashboardPage() {
   };
 
   return (
+    <RequireAuth>
     <>
       <div className="hero">
         <h1>Dashboard <span className="thin">· {me.data ? `${me.data.email} · ${me.data.plan}` : "loading…"}</span></h1>
@@ -157,5 +158,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </>
+    </RequireAuth>
   );
 }

@@ -4,7 +4,7 @@ The gateway is now a full platform, not just an inference endpoint:
 
 | Concern | Implementation |
 |---|---|
-| Identity | **Clerk** (managed: email, OAuth, MFA, orgs). No passwords in this repo |
+| Identity | **Self-hosted SuperTokens core** (email/password + optional Google/GitHub OAuth, UserRoles). No passwords in this repo |
 | Service auth | Per-user `wf_…` API keys (sha256-hashed at rest, shown once) + legacy `WAYFINDER_API_KEY` master bearer |
 | Storage | SQLite file by default (`./data/wayfinder.db`); Postgres via `DATABASE_URL` |
 | Rate limits | Per-key/user + per-IP sliding windows, tiered by plan (Redis mirrors when set) |
@@ -12,59 +12,75 @@ The gateway is now a full platform, not just an inference endpoint:
 | Logs | One PII-scrubbed row per call (success, 422, 500, 429) |
 | Dashboards | `/dashboard` (users), `/admin` (super-admins) in `web/` |
 
-## 1. Local dev (no Clerk, 30 seconds)
+## 1. Local dev (no core, 30 seconds)
 
 ```bash
 cp .env.example .env
 python3 -m venv .venv && .venv/bin/python -m pip install -e .
 WAYFINDER_PRELOAD=0 .venv/bin/python -m wayfinder.app  # :8000
-cd web && npm install && npm run dev                    # :3000
+cd web && npm install && cp .env.example .env.local && npm run dev  # :3000
 ```
 
-With no Clerk keys set, the gateway auto-provisions a `dev-admin`
-(`admin@local.dev`, enterprise plan). Open `/dashboard` — everything works
-keyless. Create a `wf_…` key and the console uses it automatically.
+With no SuperTokens core configured, the gateway auto-provisions a `dev-admin`
+(`admin@local.dev`, enterprise plan). Set `NEXT_PUBLIC_AUTH_DISABLED=1` in
+`web/.env.local` and open `/dashboard` — everything works keyless. Create a
+`wf_…` key and the console uses it automatically.
 
-## 2. Clerk setup (staging / production)
+## 2. SuperTokens setup (staging / production)
 
-1. Create an application at [clerk.com](https://clerk.com) (email + the OAuth
-   providers you want; MFA optional, recommended for admins).
-2. Copy keys:
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` → gateway env **and** web env
-   - `CLERK_SECRET_KEY` → gateway env **and** web env
-3. Find the JWKS URL: Clerk Dashboard → API Keys → “JWKS URL”
-   (`https://<instance>.clerk.accounts.dev/.well-known/jwks.json`).
-4. Gateway env:
+You run the core (this repo assumes the Railway `supertokens-core` template
+backed by Postgres; any reachable core works).
+
+1. Deploy the SuperTokens core and note its connection URI + API key (if set).
+2. Gateway env:
    ```bash
-   CLERK_ENABLED=1
-   CLERK_JWKS_URL=https://<instance>.clerk.accounts.dev/.well-known/jwks.json
-   CLERK_ISSUER=https://<instance>.clerk.accounts.dev
-   CLERK_SECRET_KEY=sk_live_...
-   WAYFINDER_SUPERADMINS=you@company.com,cto@company.com
+   SUPERTOKENS_ENABLED=1
+   SUPERTOKENS_CONNECTION_URI=http://supertokens-core.railway.internal:3567
+   SUPERTOKENS_API_KEY=            # only if the core enforces one
+   SUPERTOKENS_API_DOMAIN=https://<gateway-public-url>
+   SUPERTOKENS_WEBSITE_DOMAIN=https://<web-public-url>
+   DATABASE_URL=${{Postgres.DATABASE_URL}}   # platform tables live in Postgres
+   WAYFINDER_SUPERADMINS=you@company.com
    ```
-5. Web env: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`.
-   Rebuild web after changing the publishable key (it is inlined at build).
+3. Web env (all `NEXT_PUBLIC_*` are inlined at build — rebuild after changing):
+   ```bash
+   NEXT_PUBLIC_WEBSITE_DOMAIN=https://<web-public-url>
+   # NEXT_PUBLIC_AUTH_DISABLED must be UNSET (any value disables sign-in)
+   # NEXT_PUBLIC_OAUTH_PROVIDERS=google,github  # after step 4
+   ```
+4. Social login (optional): create OAuth apps in Google / GitHub consoles with
+   redirect URI `https://<gateway-public-url>/auth/callback/<google|github>`,
+   then set `THIRD_PARTY_GOOGLE_CLIENT_ID/_SECRET` (and/or GitHub) on the
+   gateway **and** `NEXT_PUBLIC_OAUTH_PROVIDERS=google,github` on web.
 
-How it works: the browser gets a Clerk session JWT; `lib/platform.ts`
-attaches it as `Authorization: Bearer …` on every `/api/v1/*` call. The
-gateway verifies RS256 against the JWKS, mirrors the user into its own
-`users` table (role/plan/quota live there, identity in Clerk), and every
-inference call is attributed. Super-admin = DB `role=admin`, or email in
-`WAYFINDER_SUPERADMINS`, or Clerk `org_role=admin`.
+How it works: the browser only talks to the web origin. `/api/auth/*` is
+proxied to the gateway's `/auth/*`, so session cookies stay first-party —
+no CORS or third-party-cookie pitfalls. The gateway verifies sessions
+against the core, mirrors each user into its own `users` table (role/plan/
+quota live there, identity in SuperTokens), and attributes every inference
+call. Super-admin = DB `role=admin`, or email in `WAYFINDER_SUPERADMINS`,
+or the SuperTokens UserRoles `admin` role.
 
 ## 3. Railway deploy
 
-- Gateway service: Dockerfile at repo root, healthcheck `/health`.
-  Add a Postgres plugin and set `DATABASE_URL` (or keep the `app-data`
-  volume on SQLite for small scale). Set the Clerk vars above.
-- Web service: Dockerfile at `web/`, needs `WAYFINDER_API_URL` (internal
-  gateway URL), both Clerk keys, `NEXT_PUBLIC_SITE_URL`.
-- Redis plugin (optional, recommended past 1 replica): `WAYFINDER_REDIS_URL`.
+- Gateway service (`wayfinder`): Dockerfile at repo root, healthcheck `/health`.
+  - Postgres plugin → reference `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+    (platform tables auto-created on boot; replaces the ephemeral SQLite file).
+  - Volume `wayfinder-volume` at `/app/data` + `HF_HOME=/app/data/huggingface`
+    (SQLite fallback + model cache survive redeploys).
+  - Redis plugin → `WAYFINDER_REDIS_URL=${{Redis.REDIS_URL}}` (shared cache
+    past 1 replica).
+  - SuperTokens vars from §2 (`SUPERTOKENS_ENABLED=1`, connection URI,
+    both public domains, `WAYFINDER_SUPERADMINS`).
+- Web service (`wayfinder-web`): Dockerfile at `web/`, needs
+  `WAYFINDER_API_URL` (internal gateway URL for the `/api/*` proxy),
+  `NEXT_PUBLIC_WEBSITE_DOMAIN` (public web origin, inlined at build),
+  `NEXT_PUBLIC_SITE_URL`. Leave `NEXT_PUBLIC_AUTH_DISABLED` unset.
 
 ## 4. API reference (platform)
 
-All JSON. User routes accept a Clerk JWT **or** a `wf_…` key. Admin routes
-need `role=admin` (a `wf_…` key of an admin works for scripts).
+All JSON. User routes accept a SuperTokens session cookie **or** a `wf_…`
+key. Admin routes need `role=admin` (a `wf_…` key of an admin works for scripts).
 
 ```
 POST   /v1/keys                    {name} -> {key (raw, ONCE), prefix, …} (201)
@@ -81,7 +97,7 @@ PATCH  /v1/admin/users/{id}        {role?, plan?, quota_monthly? (0 resets to pl
 GET    /v1/admin/keys?search=&limit=&offset=
 DELETE /v1/admin/keys/{prefix}     revoke any key (204)
 GET    /v1/admin/logs              same filters as /v1/me/logs, plus ?user_id=
-GET    /v1/admin/system            router, policies, cache, redis, db, clerk, limits, quotas
+GET    /v1/admin/system            router, policies, cache, redis, db, auth, limits, quotas
 GET    /v1/admin/metrics           Prometheus-style counters + DB rollups
 ```
 
@@ -108,7 +124,7 @@ override per user (`quota_monthly`, `0` = plan default) from `/admin`.
   state. Treat the DB as sensitive anyway (row-level content + IPs).
 - Usage logging is best-effort: if the DB is down, inference still serves
   (a warning is logged server-side).
-- Legacy behavior preserved: with no Clerk and no `WAYFINDER_API_KEY`,
+- Legacy behavior preserved: with no SuperTokens core and no `WAYFINDER_API_KEY`,
   inference is open (dev). With `WAYFINDER_API_KEY` set, the master bearer
   still authenticates inference but is **not** a user (platform routes 401
   on it — sign in instead).

@@ -1,8 +1,10 @@
 /** Typed client for the platform API (proxied /api/* -> gateway /v1/*).
  *
- *  Auth: Clerk session JWT when available, else a saved `wf_…` service key
- *  from localStorage (set by Dashboard "Use in console"). Anonymous works on
- *  open dev gateways; configured gateways 401 without credentials.
+ *  Browser auth rides on the SuperTokens session cookies (fetch uses
+ *  credentials:include; supertokens-web-js adds rid/anti-csrf headers).
+ *  A saved `wf_…` service key from localStorage is attached as Bearer when
+ *  present (set by Dashboard "Use in console"). Anonymous works on open dev
+ *  gateways; configured gateways 401 without credentials.
  */
 
 export type GetToken = () => Promise<string | null>;
@@ -38,6 +40,7 @@ async function call<T>(path: string, init: RequestInit = {}, getToken?: GetToken
   const token = await bearer(getToken);
   const r = await fetch(`/api${path}`, {
     ...init,
+    credentials: "include",
     headers: {
       "content-type": "application/json",
       ...(token ? { authorization: `Bearer ${token}` } : {}),
