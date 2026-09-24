@@ -237,8 +237,9 @@ async def _session_caller(db: Session, request: Optional[Request]) -> Optional[C
     the session exists but is invalid."""
     if not supertokens_ready() or request is None:
         return None
-    if not request.cookies:
-        return None
+    # NB: no cookie-presence shortcut — header-transfer sessions carry tokens
+    # in Authorization headers, not cookies. get_session returns None when
+    # nothing session-like is present (no core traffic in that case).
     from supertokens_python.recipe.session.asyncio import get_session
 
     try:
