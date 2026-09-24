@@ -67,7 +67,7 @@ class Settings:
     supertokens_connection_uri: str = os.getenv("SUPERTOKENS_CONNECTION_URI", "http://localhost:3568")
     supertokens_api_key: str = os.getenv("SUPERTOKENS_API_KEY", "")
     supertokens_api_domain: str = os.getenv("SUPERTOKENS_API_DOMAIN", "http://127.0.0.1:8000")
-    supertokens_website_domain: str = os.getenv("SUPERTOKENS_WEBSITE_DOMAIN", "http://localhost:3000")
+    supertokens_website_domain: str = os.getenv("SUPERTOKENS_WEBSITE_DOMAIN", "http://localhost:3000")  # csv OK: canonical first
     # OAuth clients (optional; provider is skipped when its pair is unset).
     google_client_id: str = os.getenv("THIRD_PARTY_GOOGLE_CLIENT_ID", "")
     google_client_secret: str = os.getenv("THIRD_PARTY_GOOGLE_CLIENT_SECRET", "")

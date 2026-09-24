@@ -205,12 +205,15 @@ app = FastAPI(title="wayfinder", version="0.1.0", lifespan=lifespan,
               description="Universal doubt layer: one policy call, calibrated act/escalate/block verdict.")
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 if settings.supertokens_enabled:
-    # Cross-domain dashboard (web/ ≠ gateway host): explicit origin +
+    # Cross-domain dashboard (web/ ≠ gateway host): explicit origins +
     # credentials, otherwise browsers drop the session cookies.
+    # SUPERTOKENS_WEBSITE_DOMAIN accepts a comma-separated list so both the
+    # canonical custom domain and the railway.app URL keep working.
     from supertokens_python.framework.fastapi import get_middleware
 
+    _web_origins = [o.strip().rstrip("/") for o in settings.supertokens_website_domain.split(",") if o.strip()]
     app.add_middleware(get_middleware())
-    app.add_middleware(CORSMiddleware, allow_origins=[settings.supertokens_website_domain],
+    app.add_middleware(CORSMiddleware, allow_origins=_web_origins,
                        allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 else:
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])

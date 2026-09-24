@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AUTH_OFF } from "@/lib/supertokens";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AuthSlot } from "./AuthState";
@@ -18,8 +19,9 @@ const TABS = [
   ["/docs", "Docs"],
   ["/metrics", "Metrics"],
   ["/dashboard", "Dashboard"],
-  ["/admin", "Admin"],
 ] as const;
+
+const ADMIN_TAB = ["/admin", "Admin"] as const;
 
 function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -57,6 +59,38 @@ export default function SiteHeader() {
   const path = usePathname();
   const [status, setStatus] = useState("connecting…");
   const [ok, setOk] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    // Quiet identity check (no login redirect): the Admin tab only appears
+    // for admins. In keyless dev mode the local dev-admin owns everything.
+    (async () => {
+      if (AUTH_OFF) {
+        if (live) setIsAdmin(true);
+        return;
+      }
+      try {
+        let key: string | null = null;
+        try {
+          key = localStorage.getItem("wayfinder.key");
+        } catch {
+          /* private mode */
+        }
+        const r = await fetch("/api/v1/me", {
+          credentials: "include",
+          headers: key ? { authorization: `Bearer ${key}` } : {},
+        });
+        if (!live) return;
+        if (r.ok) setIsAdmin((await r.json()).role === "admin");
+      } catch {
+        /* offline or anonymous — Admin stays hidden */
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, []);
 
   useEffect(() => {
     let live = true;
@@ -98,7 +132,7 @@ export default function SiteHeader() {
           <span>Wayfinder</span>
         </Link>
         <nav className="order-3 flex basis-full gap-1 overflow-x-auto md:order-none md:basis-auto" aria-label="Primary">
-          {TABS.map(([href, label]) => (
+          {[...TABS, ...(isAdmin ? [ADMIN_TAB] : [])].map(([href, label]) => (
             <Button
               key={href}
               variant="ghost"
