@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Lost } from "@/components/illustrations";
 import { Doubtling } from "@/components/mascots";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
@@ -8,13 +7,14 @@ export default function NotFound() {
   return (
     <Card className="relative mx-auto mt-10 max-w-xl overflow-hidden">
       <CardContent className="relative grid place-items-center gap-2 px-5 py-10 text-center">
-        <div className="flex items-end justify-center gap-2">
-          <div className="w-40 text-muted-foreground">
-            <Lost label="A dashed arch with its checkpoint wandering off" />
-          </div>
-          <div aria-hidden="true" className="mascot-bob -ml-10 mb-1 text-muted-foreground/80">
-            <Doubtling size={64} mood="curious" />
-          </div>
+        <img
+          src="/dino-404.svg"
+          alt="Pixel dinosaur jumping over cacti beneath a giant 404"
+          className="w-full max-w-md"
+          loading="lazy"
+        />
+        <div aria-hidden="true" className="mascot-bob mx-auto text-muted-foreground/80">
+          <Doubtling size={64} mood="curious" />
         </div>
         <p className="eyebrow mt-2">404 — no route</p>
         <CardTitle className="font-tsj-display text-2xl">No verdict here.</CardTitle>
