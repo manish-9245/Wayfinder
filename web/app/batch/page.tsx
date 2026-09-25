@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
+import { JsonInput } from "@/components/json-input";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -114,7 +114,7 @@ export default function BatchPage() {
             Tidy lines
           </Button>
         </div>
-        <Textarea id="bstates" rows={7} value={text} onChange={(e) => setText(e.target.value)} className="mt-2" />
+        <JsonInput id="bstates" rows={7} value={text} onChange={setText} className="mt-2" />
         {err && (
           <Alert variant="destructive" className="mt-2">
             <AlertDescription role="alert">{err}</AlertDescription>

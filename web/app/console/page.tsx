@@ -4,6 +4,7 @@ import { api, toast, type DecideResult } from "@/lib/api";
 import { EXAMPLES } from "@/lib/examples";
 import { AnswerCard, VerdictHero } from "@/components/Verdict";
 import { JsonBlock } from "@/components/json-block";
+import { JsonInput } from "@/components/json-input";
 import { PolicyMark } from "@/components/illustrations";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -193,7 +193,7 @@ export default function ConsolePage() {
                 Format JSON
               </Button>
             </div>
-            <Textarea id="state" rows={9} value={state} onChange={(e) => setState(e.target.value)} aria-describedby="state-hint" className="mt-2" />
+            <JsonInput id="state" rows={9} value={state} onChange={setState} ariaDescribedBy="state-hint" className="mt-2" />
             <CardDescription className="mt-1.5 font-tsj-mono text-xs" id="state-hint">A JSON object of fields, or plain text (sent as-is).</CardDescription>
             {stateErr && (
               <Alert variant="destructive" className="mt-2">
@@ -208,7 +208,7 @@ export default function ConsolePage() {
                 Format JSON
               </Button>
             </div>
-            <Textarea id="opts" rows={9} value={opts} onChange={(e) => setOpts(e.target.value)} aria-describedby="opts-hint" className="mt-2" />
+            <JsonInput id="opts" rows={9} value={opts} onChange={setOpts} ariaDescribedBy="opts-hint" className="mt-2" />
             <CardDescription className="mt-1.5 font-tsj-mono text-xs" id="opts-hint">
               e.g. <code className="rounded border bg-background px-1.5 py-px font-tsj-mono text-xs">{'{"model":"multilingual","auto_act_above":0.9}'}</code> · omit to auto-route by language.
             </CardDescription>
