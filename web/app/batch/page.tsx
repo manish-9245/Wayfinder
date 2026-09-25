@@ -3,8 +3,8 @@ import { Fragment, useEffect, useState } from "react";
 import { api, toast, topOf, verdictOf, type DecideResult } from "@/lib/api";
 import { SAMPLE_BATCH } from "@/lib/examples";
 import { EmptyBox } from "@/components/illustrations";
+import { Doubtling } from "@/components/mascots";
 import { AnswerCard, VerdictHero } from "@/components/Verdict";
-import { Spotlight } from "@/components/aceternity/spotlight";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function BatchPage() {
   useEffect(() => { document.title = "Batch scoring — wayfinder"; }, []);
@@ -55,152 +56,182 @@ export default function BatchPage() {
 
   return (
     <>
-      <div className="mb-4 mt-6">
-        <h1 className="text-4xl font-bold tracking-tight">Batch.</h1>
-        <p className="mt-1 max-w-[68ch] text-sm text-muted-foreground">
+      <div className="mb-8 mt-6">
+        <p className="eyebrow">Wayfinder — batch scoring</p>
+        <h1 className="mt-2 font-tsj-display text-4xl font-bold tracking-tight md:text-5xl">Batch</h1>
+        <p className="mt-3 max-w-[68ch] text-sm text-muted-foreground">
           Score up to 128 states against one policy in shared forward passes. Built for backlogs, queues, and feeds:
           compatible states share the GPU batch at about 1ms per decision. Expand any row for full answers.
         </p>
       </div>
-      <Card className="mb-3.5">
-        <CardContent className="pt-5">
-          <Label>Policy</Label>
-          <div className="mt-2.5 flex flex-wrap gap-2" role="group" aria-label="Policy">
-            {policies.map((k) => (
-              <Button
-                key={k}
-                type="button"
-                variant={policy === k ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                aria-pressed={policy === k}
-                onClick={() => setPolicy(k)}
-              >
-                {k}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="mb-3.5">
-        <CardContent className="pt-5">
-          <Label htmlFor="bstates">States: one JSON object per line</Label>
-          <Textarea id="bstates" rows={7} value={text} onChange={(e) => setText(e.target.value)} className="mt-2" />
-          {err && (
-            <Alert variant="destructive" className="mt-2">
-              <AlertDescription role="alert">{err}</AlertDescription>
-            </Alert>
-          )}
-          <p className="mt-3 flex flex-wrap items-center gap-2">
-            <Button onClick={send} disabled={busy || !policy} aria-busy={busy}>
-              {busy && <Loader2 aria-hidden="true" className="animate-spin" />}Score batch
-            </Button>
-            <Button
-              variant="outline"
+
+      <section aria-label="Policy" className="mb-10">
+        <div className="mb-3 flex items-baseline gap-4">
+          <span className="section-num">01</span>
+          <h2 className="font-tsj-display text-xl font-bold tracking-tight">Policy</h2>
+        </div>
+        <div className="hairline-t" role="group" aria-label="Policy">
+          {policies.map((k, i) => (
+            <button
+              key={k}
               type="button"
-              onClick={() => {
-                setText(SAMPLE_BATCH.map((r) => JSON.stringify(r.state)).join("\n"));
-                setRows([]); setMeta("");
-              }}
+              aria-pressed={policy === k}
+              onClick={() => setPolicy(k)}
+              className={cn(
+                "hairline-b grid w-full grid-cols-[auto_1fr] items-baseline gap-x-4 px-1 py-3 text-left transition-colors hover:bg-accent/40",
+                policy === k && "bg-accent/40"
+              )}
             >
-              Load dense sample
-            </Button>
-            <span className="text-[13px] text-muted-foreground" role="status">{meta}</span>
-          </p>
-        </CardContent>
-      </Card>
+              <span className={cn("section-num", policy !== k && "text-muted-foreground")}>{String(i + 1).padStart(2, "0")}</span>
+              <span className={cn("font-tsj-mono text-sm font-semibold", policy === k && "text-ember")}>{k}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="States" className="mb-10">
+        <div className="mb-3 flex items-baseline gap-4">
+          <span className="section-num">02</span>
+          <h2 className="font-tsj-display text-xl font-bold tracking-tight">States</h2>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="bstates" className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">One JSON object per line</Label>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-auto px-2 py-1 font-tsj-mono text-[11px]"
+            onClick={() => {
+              const lines = text.split("\n").map((s) => s.trim()).filter(Boolean);
+              try {
+                setText(lines.map((l) => JSON.stringify(JSON.parse(l))).join("\n"));
+                setErr("");
+              } catch {
+                setErr("One of the lines is not valid JSON — nothing tidied.");
+              }
+            }}
+          >
+            Tidy lines
+          </Button>
+        </div>
+        <Textarea id="bstates" rows={7} value={text} onChange={(e) => setText(e.target.value)} className="mt-2" />
+        {err && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertDescription role="alert">{err}</AlertDescription>
+          </Alert>
+        )}
+        <p className="mt-4 flex flex-wrap items-center gap-3">
+          <Button size="lg" onClick={send} disabled={busy || !policy} aria-busy={busy}>
+            {busy && <Loader2 aria-hidden="true" className="animate-spin" />}Score batch
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setText(SAMPLE_BATCH.map((r) => JSON.stringify(r.state)).join("\n"));
+              setRows([]); setMeta("");
+            }}
+          >
+            Load dense sample
+          </Button>
+          <span className="font-tsj-mono text-xs text-muted-foreground" role="status">{meta}</span>
+        </p>
+      </section>
+
       {rows.length > 0 ? (
-        <Card>
-          <CardContent className="pt-5">
-            <Label>Results</Label>
-            <div className="mt-2 flex flex-wrap gap-4 text-xs text-muted-foreground" aria-label="Verdict legend">
-              <span className="inline-flex items-center gap-1.5">
-                <Badge variant="success">act / allow</Badge>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Badge variant="warning">review</Badge>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Badge variant="destructive">escalate / block</Badge>
-              </span>
-            </div>
-            <div className="mt-3">
-              <Table aria-label="Batch decision results">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>state</TableHead>
-                    <TableHead>verdict</TableHead>
-                    <TableHead>top answer</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map(({ state, res }, i) => {
-                    const v = verdictOf(res);
-                    const isOpen = expanded === i;
-                    const tone = v === "act" || v === "allow" ? "success" : v === "block" || v === "escalate" ? "destructive" : "warning";
-                    return (
-                      <Fragment key={i}>
+        <section aria-label="Results">
+          <div className="mb-3 flex items-baseline gap-4">
+            <span className="section-num">03</span>
+            <h2 className="font-tsj-display text-xl font-bold tracking-tight">Results</h2>
+          </div>
+          <div className="mb-3 flex flex-wrap gap-4 font-tsj-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground" aria-label="Verdict legend">
+            <span className="inline-flex items-center gap-1.5">
+              <Badge variant="success">act / allow</Badge>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Badge variant="warning">review</Badge>
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Badge variant="destructive">escalate / block</Badge>
+            </span>
+          </div>
+          <div className="hairline-t overflow-x-auto">
+            <Table aria-label="Batch decision results">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">#</TableHead>
+                  <TableHead className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">state</TableHead>
+                  <TableHead className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">verdict</TableHead>
+                  <TableHead className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">top answer</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map(({ state, res }, i) => {
+                  const v = verdictOf(res);
+                  const isOpen = expanded === i;
+                  const tone = v === "act" || v === "allow" ? "success" : v === "block" || v === "escalate" ? "destructive" : "warning";
+                  return (
+                    <Fragment key={i}>
+                      <TableRow>
+                        <TableCell className="font-tsj-mono">{i + 1}</TableCell>
+                        <TableCell className="font-tsj-mono">{JSON.stringify(state).slice(0, 80)}</TableCell>
+                        <TableCell>
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            <Badge variant={tone}>{v}</Badge>
+                            {res.cache_hit && <Badge variant="secondary">cached</Badge>}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="mr-2 font-tsj-grot">{topOf(res)}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-expanded={isOpen}
+                            aria-label={`${isOpen ? "Hide" : "Show"} full answers for row ${i + 1}`}
+                            onClick={() => setExpanded(isOpen ? null : i)}
+                          >
+                            {isOpen ? "Hide" : "Details"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      {isOpen && (
                         <TableRow>
-                          <TableCell>{i + 1}</TableCell>
-                          <TableCell className="font-mono">{JSON.stringify(state).slice(0, 80)}</TableCell>
-                          <TableCell>
-                            <span className="flex flex-wrap items-center gap-1.5">
-                              <Badge variant={tone}>{v}</Badge>
-                              {res.cache_hit && <Badge variant="secondary">cached</Badge>}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="mr-2">{topOf(res)}</span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              aria-expanded={isOpen}
-                              aria-label={`${isOpen ? "Hide" : "Show"} full answers for row ${i + 1}`}
-                              onClick={() => setExpanded(isOpen ? null : i)}
-                            >
-                              {isOpen ? "Hide" : "Details"}
-                            </Button>
+                          <TableCell colSpan={4}>
+                            <Separator className="mb-3" />
+                            <VerdictHero verdict={res.verdict || { verdict: "review" }} count={Object.keys(res.answers || {}).length} />
+                            <div className="grid gap-6">
+                              {Object.entries(res.answers || {}).map(([k, a]) => (
+                                <AnswerCard key={k} name={k} a={a} question={full[policy]?.questions?.[k]} />
+                              ))}
+                            </div>
                           </TableCell>
                         </TableRow>
-                        {isOpen && (
-                          <TableRow>
-                            <TableCell colSpan={4}>
-                              <Separator className="mb-3" />
-                              <VerdictHero verdict={res.verdict || { verdict: "review" }} count={Object.keys(res.answers || {}).length} />
-                              <div className="grid gap-3.5">
-                                {Object.entries(res.answers || {}).map(([k, a]) => (
-                                  <AnswerCard key={k} name={k} a={a} question={full[policy]?.questions?.[k]} />
-                                ))}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-            <CardDescription className="mt-2">One row per scored state, with its verdict and top answer.</CardDescription>
-          </CardContent>
-        </Card>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <CardDescription className="mt-2 font-tsj-mono text-xs">One row per scored state, with its verdict and top answer.</CardDescription>
+        </section>
       ) : (
         !busy && (
-          <Spotlight className="rounded-lg">
-          <Card aria-label="No batch results yet" className="h-full">
+          <Card aria-label="No batch results yet">
             <CardContent className="grid place-items-center gap-2 px-5 py-10 text-center text-muted-foreground">
+              <div aria-hidden="true" className="mascot-bob text-muted-foreground/80">
+                <Doubtling size={76} mood="sleepy" />
+              </div>
               <div className="size-[88px] opacity-80">
                 <EmptyBox />
               </div>
+              <p className="eyebrow">No batch yet</p>
               <p className="max-w-[44ch] text-sm">
-                <strong className="text-foreground">No batch yet.</strong> Paste one JSON state per line above and score
-                them together.
+                Paste one JSON state per line above and score them together.
               </p>
             </CardContent>
           </Card>
-          </Spotlight>
         )
       )}
     </>

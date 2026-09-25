@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Outfit, JetBrains_Mono, Bricolage_Grotesque, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import SuperTokensProvider from "@/components/SuperTokensProvider";
+import SiteBackdrop from "@/components/site-backdrop";
+import { CornerBuddy } from "@/components/mascots";
 import SiteHeader from "@/components/site-header";
 import RouteFocus from "@/components/RouteFocus";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -9,6 +11,10 @@ import "./globals.css";
 
 const display = Outfit({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-display", display: "swap" });
 const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
+// Editorial homepage type (style-transfer): display/UI/mono voices for the landing page only.
+const tsjDisplay = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-tsj-display", display: "swap" });
+const tsjGrot = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-tsj-grot", display: "swap" });
+const tsjMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-tsj-mono", display: "swap" });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -37,8 +43,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${display.variable} ${mono.variable}`}>
+      <html lang="en" suppressHydrationWarning className={`${display.variable} ${mono.variable} ${tsjDisplay.variable} ${tsjGrot.variable} ${tsjMono.variable}`}>
       <body>
+        <SiteBackdrop />
         <ThemeProvider>
           <SuperTokensProvider>
             <a
@@ -53,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               {children}
             </main>
             <Toaster richColors closeButton />
+            <CornerBuddy />
           </SuperTokensProvider>
         </ThemeProvider>
       </body>

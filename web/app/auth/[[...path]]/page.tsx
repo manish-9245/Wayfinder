@@ -49,7 +49,8 @@ function AuthInner() {
         <LoginNotice />
         <Card className="mx-auto mt-10 max-w-2xl">
           <CardHeader>
-            <CardTitle>Sign-in is disabled on this deployment.</CardTitle>
+            <p className="eyebrow">Wayfinder — sign-in</p>
+            <CardTitle className="mt-2 font-tsj-display">Sign-in is disabled on this deployment.</CardTitle>
             <CardDescription>
               Use a <code className="rounded border bg-background px-1.5 py-px font-mono text-xs">wf_…</code> API key
               from the dashboard for scripts and the console. Managed sign-in and
@@ -76,7 +77,8 @@ function AuthInner() {
         <LoginNotice />
         <Card className="mx-auto mt-10 max-w-2xl">
           <CardHeader>
-            <CardTitle>Nothing here.</CardTitle>
+            <p className="eyebrow">Wayfinder — sign-in</p>
+            <CardTitle className="mt-2 font-tsj-display">Nothing here.</CardTitle>
           </CardHeader>
           <CardContent>
             <Button variant="outline" asChild>

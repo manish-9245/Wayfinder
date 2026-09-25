@@ -1,7 +1,7 @@
 const GATE =
   process.env.WAYFINDER_API_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://wayfinder-production-282b.up.railway.app"
+    ? "https://wayfinder-backend.buildwithmanish.com"
     : "http://127.0.0.1:8000");
 
 /** @type {import('next').NextConfig} */

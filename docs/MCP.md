@@ -6,7 +6,7 @@ The tools run on the hosted gateway against the same policies and
 thresholds as the REST API, and every call needs your `wf_…` API key
 ([dashboard](/dashboard) → API keys).
 
-Endpoint: `https://wayfinder-production-282b.up.railway.app/mcp/`
+Endpoint: `https://wayfinder-backend.buildwithmanish.com/mcp/`
 (Streamable HTTP, stateless — safe behind any number of replicas).
 
 ## Client config (hosted)
@@ -21,7 +21,7 @@ most clients accept this shape verbatim):
       "command": "npx",
       "args": [
         "-y", "mcp-remote",
-        "https://wayfinder-production-282b.up.railway.app/mcp/",
+        "https://wayfinder-backend.buildwithmanish.com/mcp/",
         "--header", "Authorization: Bearer ${WAYFINDER_API_KEY}"
       ],
       "env": { "WAYFINDER_API_KEY": "wf_…" }

@@ -10,7 +10,6 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY wayfinder/ wayfinder/
 COPY docs/ docs/
-COPY ui/ ui/
 RUN pip install --upgrade pip && pip install -e . && python -c "import wayfinder; print('wayfinder ok')" \
  && useradd --create-home --uid 10001 appuser \
  && mkdir -p /app/data /app/.cache && chown -R appuser:appuser /app

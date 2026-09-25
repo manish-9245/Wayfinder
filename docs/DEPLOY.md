@@ -2,7 +2,7 @@
 
 Wayfinder is a hosted solution: the gateway, checkpoints, cache, and
 dashboards run for you at
-`https://wayfinder-production-282b.up.railway.app`. Sign in on this site,
+`https://wayfinder-backend.buildwithmanish.com`. Sign in on this site,
 create a `wf_…` key in the [dashboard](/dashboard), and call the
 [API](API.md) or [MCP](MCP.md) endpoint. No install, no weights, no ops.
 

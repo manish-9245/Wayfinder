@@ -3,17 +3,18 @@ import { useCallback, useEffect, useState } from "react";
 import { api, toast, type DecideResult } from "@/lib/api";
 import { EXAMPLES } from "@/lib/examples";
 import { AnswerCard, VerdictHero } from "@/components/Verdict";
-import { Spotlight } from "@/components/aceternity/spotlight";
+import { JsonBlock } from "@/components/json-block";
 import { PolicyMark } from "@/components/illustrations";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const POLICY_CONTEXT: Record<string, { use: string; reads: string }> = {
   support_inbound: {
@@ -33,6 +34,16 @@ const POLICY_CONTEXT: Record<string, { use: string; reads: string }> = {
     reads: "Allow means publish. Review means queue for a moderator. Block means toxic or threatening content.",
   },
 };
+
+function SectionNum({ n, title, hint }: { n: string; title: string; hint?: string }) {
+  return (
+    <div className="mb-3 flex items-baseline gap-4">
+      <span className="section-num">{n}</span>
+      <h2 className="font-tsj-display text-xl font-bold tracking-tight">{title}</h2>
+      {hint && <span className="ml-auto hidden font-tsj-mono text-[11px] text-muted-foreground sm:block">{hint}</span>}
+    </div>
+  );
+}
 
 export default function ConsolePage() {
   useEffect(() => { document.title = "Console — wayfinder"; }, []);
@@ -87,129 +98,135 @@ export default function ConsolePage() {
     return () => document.removeEventListener("keydown", h);
   }, [send]);
 
+  const formatJson = (raw: string, set: (v: string) => void, what: string) => {
+    try {
+      set(JSON.stringify(JSON.parse(raw), null, 2));
+    } catch {
+      toast(`${what} is not valid JSON — nothing formatted`);
+    }
+  };
+
   const desc = policies[policy];
   return (
     <>
-      <div className="mb-4 mt-6">
-        <h1 className="text-4xl font-bold tracking-tight">Console.</h1>
-        <p className="mt-1 max-w-[68ch] text-sm text-muted-foreground">
+      <div className="mb-8 mt-6">
+        <p className="eyebrow">Wayfinder — live workbench</p>
+        <h1 className="mt-2 font-tsj-display text-4xl font-bold tracking-tight md:text-5xl">Console</h1>
+        <p className="mt-3 max-w-[68ch] text-sm text-muted-foreground">
           A live workbench for the doubt layer. Pick a policy, load a hard case or paste your own state, and read the
           verdict the same way your code would. Every answer carries a calibrated confidence, and thresholds decide
           what acts alone. See <Link href="/docs" className="text-info hover:underline">docs</Link> for the API behind
           this screen.
         </p>
       </div>
-      <div className="mb-3.5 grid gap-3.5 sm:grid-cols-2">
-        {Object.entries(POLICY_CONTEXT).map(([k, c]) => (
-          <Spotlight key={k} className="rounded-lg">
-          <Card className="h-full">
-            <CardHeader className="flex-row items-center gap-3.5 space-y-0">
-              <span className="grid size-9 shrink-0 place-items-center text-muted-foreground [&_svg]:size-full">
-                <PolicyMark policy={k} size={36} />
+
+      <section aria-labelledby="console-policy" className="mb-10">
+        <SectionNum n="01" title="Policy" hint={desc ? `act ≥ ${desc.auto_act_above}${desc.escalate_below != null ? ` · escalate < ${desc.escalate_below}` : ""}` : undefined} />
+        <div id="console-policy" className="hairline-t" role="group" aria-label="Policy">
+          {Object.entries(POLICY_CONTEXT).map(([k, c], i) => (
+            <button
+              key={k}
+              type="button"
+              aria-pressed={policy === k}
+              onClick={() => setPolicy(k)}
+              className={cn(
+                "hairline-b grid w-full grid-cols-[auto_1fr] items-baseline gap-x-4 gap-y-1 px-1 py-4 text-left transition-colors hover:bg-accent/40",
+                policy === k && "bg-accent/40"
+              )}
+            >
+              <span className="flex items-center gap-3">
+                <span className={cn("section-num", policy !== k && "text-muted-foreground")}>{String(i + 1).padStart(2, "0")}</span>
+                <span className="grid size-8 place-items-center text-muted-foreground [&_svg]:size-full">
+                  <PolicyMark policy={k} size={32} />
+                </span>
               </span>
-              <CardTitle className="capitalize">{k.replace(/_/g, " ")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-[13px] text-muted-foreground">
-              <p><strong className="text-foreground">Use it to</strong> {c.use}</p>
-              <p className="mt-1.5"><strong className="text-foreground">Read it as</strong> {c.reads}</p>
-            </CardContent>
-          </Card>
-          </Spotlight>
-        ))}
-      </div>
-      <Card className="mb-3.5">
-        <CardContent className="pt-5">
-          <Label id="pollbl">Policy</Label>
-          <div className="mt-2.5 flex flex-wrap gap-2" role="group" aria-labelledby="pollbl">
-            {Object.keys(policies).map((k) => (
-              <Button
-                key={k}
-                type="button"
-                variant={policy === k ? "default" : "outline"}
-                size="sm"
-                className="rounded-full"
-                aria-pressed={policy === k}
-                onClick={() => setPolicy(k)}
-              >
-                {k}
+              <span>
+                <span className={cn("font-tsj-mono text-sm font-semibold", policy === k && "text-ember")}>{k}</span>
+                <span className="mt-1 block text-[13px] text-muted-foreground"><strong className="font-semibold text-foreground">Use it to</strong> {c.use}</span>
+                <span className="mt-0.5 block text-[13px] text-muted-foreground"><strong className="font-semibold text-foreground">Read it as</strong> {c.reads}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+        {desc && (
+          <p className="mt-2 font-tsj-mono text-xs text-muted-foreground" role="status">
+            {desc.description} · act ≥ {desc.auto_act_above}
+            {desc.escalate_below != null ? ` · escalate < ${desc.escalate_below}` : ""}
+          </p>
+        )}
+      </section>
+
+      <section aria-labelledby="console-examples" className="mb-10">
+        <SectionNum n="02" title="Hard cases" hint="⌘↵ sends" />
+        <div id="console-examples" className="hairline-t" role="group" aria-label="Dense examples: load a hard case">
+          {EXAMPLES.map((ex, i) => (
+            <button
+              key={ex.label}
+              type="button"
+              title={ex.note}
+              onClick={() => {
+                setPolicy(ex.policy);
+                setState(typeof ex.state === "string" ? ex.state : JSON.stringify(ex.state, null, 2));
+                setOpts(JSON.stringify(ex.options || { model: null }, null, 2));
+                setRes(null); setMeta("");
+              }}
+              className="hairline-b grid w-full grid-cols-[auto_1fr] items-baseline gap-x-4 px-1 py-3 text-left transition-colors hover:bg-accent/40"
+            >
+              <span className="section-num text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+              <span>
+                <span className="font-tsj-grot text-[15px] font-semibold">{ex.label}</span>
+                <span className="ml-2 font-tsj-mono text-[11px] text-muted-foreground">{ex.policy}</span>
+                <span className="mt-0.5 block text-[13px] text-muted-foreground">{ex.note}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="State and options" className="mb-6">
+        <SectionNum n="03" title="State & options" />
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="state" className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">State — JSON object or plain text</Label>
+              <Button type="button" variant="ghost" size="sm" className="h-auto px-2 py-1 font-tsj-mono text-[11px]" onClick={() => formatJson(state, setState, "State")}>
+                Format JSON
               </Button>
-            ))}
-          </div>
-          {desc && (
-            <CardDescription className="mt-2" role="status">
-              {desc.description} · act ≥ {desc.auto_act_above}
-              {desc.escalate_below != null ? ` · escalate < ${desc.escalate_below}` : ""}
-            </CardDescription>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="mb-3.5">
-        <CardContent className="pt-5">
-          <Label id="exlbl">Dense examples: load a hard case</Label>
-          <div className="mt-2.5 flex flex-wrap gap-2" role="group" aria-labelledby="exlbl">
-            {EXAMPLES.map((ex) => (
-              <Button
-                key={ex.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                title={ex.note}
-                onClick={() => {
-                  setPolicy(ex.policy);
-                  setState(typeof ex.state === "string" ? ex.state : JSON.stringify(ex.state, null, 2));
-                  setOpts(JSON.stringify(ex.options || { model: null }, null, 2));
-                  setRes(null); setMeta("");
-                }}
-              >
-                {ex.label}
-              </Button>
-            ))}
-          </div>
-          <CardDescription className="mt-2">
-            Each loads a full record plus the options it needs. Hover a chip for why it is tricky. Press{" "}
-            <kbd className="rounded border border-b-2 bg-muted px-1.5 py-px font-mono text-[11px]">⌘↵</kbd> to send.
-          </CardDescription>
-        </CardContent>
-      </Card>
-      <div className="grid gap-3.5 md:grid-cols-2">
-        <Spotlight className="rounded-lg">
-        <Card className="h-full">
-          <CardContent className="pt-5">
-            <Label htmlFor="state">State: JSON object or plain text</Label>
+            </div>
             <Textarea id="state" rows={9} value={state} onChange={(e) => setState(e.target.value)} aria-describedby="state-hint" className="mt-2" />
-            <CardDescription className="mt-1.5" id="state-hint">A JSON object of fields, or plain text (sent as-is).</CardDescription>
+            <CardDescription className="mt-1.5 font-tsj-mono text-xs" id="state-hint">A JSON object of fields, or plain text (sent as-is).</CardDescription>
             {stateErr && (
               <Alert variant="destructive" className="mt-2">
                 <AlertDescription role="alert">{stateErr}</AlertDescription>
               </Alert>
             )}
-          </CardContent>
-        </Card>
-        </Spotlight>
-        <Spotlight className="rounded-lg">
-        <Card className="h-full">
-          <CardContent className="pt-5">
-            <Label htmlFor="opts">Options: model pin and threshold overrides (JSON)</Label>
+          </div>
+          <div>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="opts" className="font-tsj-mono text-[11px] uppercase tracking-[0.14em]">Options — model pin / threshold overrides</Label>
+              <Button type="button" variant="ghost" size="sm" className="h-auto px-2 py-1 font-tsj-mono text-[11px]" onClick={() => formatJson(opts, setOpts, "Options")}>
+                Format JSON
+              </Button>
+            </div>
             <Textarea id="opts" rows={9} value={opts} onChange={(e) => setOpts(e.target.value)} aria-describedby="opts-hint" className="mt-2" />
-            <CardDescription className="mt-1.5" id="opts-hint">
-              e.g. <code className="rounded border bg-background px-1.5 py-px font-mono text-xs">{'{"model":"multilingual","auto_act_above":0.9}'}</code> · omit to auto-route by language.
+            <CardDescription className="mt-1.5 font-tsj-mono text-xs" id="opts-hint">
+              e.g. <code className="rounded border bg-background px-1.5 py-px font-tsj-mono text-xs">{'{"model":"multilingual","auto_act_above":0.9}'}</code> · omit to auto-route by language.
             </CardDescription>
             {optsErr && (
               <Alert variant="destructive" className="mt-2">
                 <AlertDescription role="alert">{optsErr}</AlertDescription>
               </Alert>
             )}
-          </CardContent>
-        </Card>
-        </Spotlight>
-      </div>
-      <p className="my-4 flex flex-wrap items-center gap-3">
-        <Button onClick={send} disabled={busy || !policy} aria-busy={busy}>
-          {busy && <Loader2 aria-hidden="true" className="animate-spin" />}Decide
-        </Button>
-        <span className="text-[13px] text-muted-foreground" id="meta" role="status">{meta}</span>
-      </p>
+          </div>
+        </div>
+        <p className="hairline-t my-6 flex flex-wrap items-center gap-4 pt-6">
+          <Button size="lg" onClick={send} disabled={busy || !policy} aria-busy={busy}>
+            {busy && <Loader2 aria-hidden="true" className="animate-spin" />}Decide
+          </Button>
+          <span className="font-tsj-mono text-xs text-muted-foreground" id="meta" role="status">{meta}</span>
+        </p>
+      </section>
+
       {busy && (
         <Card className="my-4" aria-hidden="true">
           <CardContent className="space-y-2.5 pt-5">
@@ -220,26 +237,22 @@ export default function ConsolePage() {
         </Card>
       )}
       {res && (
-        <div className="grid gap-3.5">
-          <VerdictHero verdict={res.verdict || { verdict: "review" }} count={Object.keys(res.answers || {}).length} />
+        <section aria-label="Decision result" className="grid gap-6">
+          <div>
+            <SectionNum n="04" title="Verdict" />
+            <VerdictHero verdict={res.verdict || { verdict: "review" }} count={Object.keys(res.answers || {}).length} />
+          </div>
           {Object.entries(res.answers || {}).map(([k, a], i) => (
             <div key={k} className="animate-rise-in" style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}>
               <AnswerCard name={k} a={a} question={policies[policy]?.questions?.[k]} />
             </div>
           ))}
-          <Card>
-            <CardContent className="pt-5">
-              <Label>Raw response</Label>
-              <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-background p-3.5 font-mono text-xs leading-6" tabIndex={0}>
-                {JSON.stringify(res, null, 2)}
-              </pre>
-            </CardContent>
-          </Card>
+          <JsonBlock label="Raw response" data={res} />
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">cache {res.cache_hit ? "hit" : "miss"}</Badge>
             {res.policy && <Badge variant="outline">{res.policy}</Badge>}
           </div>
-        </div>
+        </section>
       )}
     </>
   );

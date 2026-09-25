@@ -9,7 +9,8 @@ export default function Legal() {
   return (
     <Card className="mt-6">
       <CardContent className="doc-body pt-6">
-        <h1>Privacy and terms</h1>
+        <p className="eyebrow">Wayfinder — legal</p>
+        <h1 className="font-tsj-display">Privacy and terms</h1>
         <p className="text-muted-foreground">Last updated September 2026. Plain language, no surprises.</p>
         <h2>Privacy</h2>
         <ul>

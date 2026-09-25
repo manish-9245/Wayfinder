@@ -26,8 +26,8 @@ export function Kpis({ items }: { items: { k: string; n: string }[] }) {
         <Spotlight key={i.k} className="rounded-lg">
         <Card className="h-full">
           <CardContent className="pt-4">
-            <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{i.k}</div>
-            <div className="text-[26px] font-bold tabular-nums tracking-tight">{i.n}</div>
+            <div className="font-tsj-mono text-[11px] uppercase tracking-widest text-muted-foreground">{i.k}</div>
+            <div className="font-tsj-display text-[26px] font-bold tabular-nums tracking-tight">{i.n}</div>
           </CardContent>
         </Card>
         </Spotlight>
@@ -48,7 +48,7 @@ export function DailyChart({ daily }: { daily: { day: string; requests: number }
     <Spotlight className="rounded-lg">
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Requests per day</CardTitle>
+        <CardTitle className="font-tsj-grot">Requests per day</CardTitle>
       </CardHeader>
       <CardContent>
         <svg className="block h-[120px] w-full" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Requests per day, peak ${max}`}>
@@ -62,7 +62,7 @@ export function DailyChart({ daily }: { daily: { day: string; requests: number }
             );
           })}
         </svg>
-        <CardDescription>
+        <CardDescription className="font-tsj-mono text-xs">
           Peak {max}/day · last {daily.length} days
         </CardDescription>
       </CardContent>
@@ -77,7 +77,7 @@ export function PolicyBars({ rows }: { rows: { policy: string; requests: number 
     <Spotlight className="rounded-lg">
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>By policy</CardTitle>
+        <CardTitle className="font-tsj-grot">By policy</CardTitle>
       </CardHeader>
       <CardContent>
         {rows.length === 0 && <p className="text-[13px] text-muted-foreground">No traffic yet.</p>}
@@ -97,13 +97,14 @@ export function PolicyBars({ rows }: { rows: { policy: string; requests: number 
 }
 
 export function verdictChip(v: string) {
-  const variant = v === "act" || v === "allow" ? "success" : v === "block" ? "destructive" : v ? "warning" : "secondary";
+  const variant = v === "act" || v === "allow" ? "success" : v === "block" || v === "escalate" ? "destructive" : v ? "warning" : "secondary";
   return <Badge variant={variant}>{v || "—"}</Badge>;
 }
 
 export function LogsTable({ logs, showEmail }: { logs: LogRow[]; showEmail?: boolean }) {
   if (!logs.length) return <p className="text-[13px] text-muted-foreground">No requests match.</p>;
   return (
+    <div className="overflow-x-auto">
     <Table>
       <TableHeader>
         <TableRow>
@@ -139,6 +140,7 @@ export function LogsTable({ logs, showEmail }: { logs: LogRow[]; showEmail?: boo
         ))}
       </TableBody>
     </Table>
+    </div>
   );
 }
 

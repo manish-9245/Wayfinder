@@ -1,7 +1,7 @@
 #!/bin/bash
 # smoke tests against the hosted gate (override with $1, key via $WF_KEY)
 set -euo pipefail
-BASE="${1:-https://wayfinder-production-282b.up.railway.app}"
+BASE="${1:-https://wayfinder-backend.buildwithmanish.com}"
 AUTH=(-H "authorization: Bearer ${WF_KEY:?set WF_KEY to a dashboard API key}")
 echo "== health";        curl -sf "$BASE/health" | head -c 300; echo
 echo "== policies";      curl -sf "$BASE/policies" | head -c 300; echo

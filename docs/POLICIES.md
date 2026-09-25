@@ -43,7 +43,7 @@ question named. Never silently.
 ## Per-call overrides
 
 ```bash
-export WF_URL=https://wayfinder-production-282b.up.railway.app
+export WF_URL=https://wayfinder-backend.buildwithmanish.com
 export WF_KEY=wf_…   # dashboard → API keys
 curl $WF_URL/v1/decide/support_inbound \
   -H "authorization: Bearer $WF_KEY" -H 'content-type: application/json' -d '{

@@ -1,12 +1,12 @@
 # API reference
 
-Base URL: `https://wayfinder-production-282b.up.railway.app`. Interactive
+Base URL: `https://wayfinder-backend.buildwithmanish.com`. Interactive
 try-it-now: the [console](/console) on this site. Every `POST` needs
 `Authorization: Bearer <key>` — grab a `wf_…` service key from the
 [dashboard](/dashboard) after signing in.
 
 ```bash
-export WF_URL=https://wayfinder-production-282b.up.railway.app
+export WF_URL=https://wayfinder-backend.buildwithmanish.com
 export WF_KEY=wf_…   # dashboard → API keys
 ```
 
@@ -104,7 +104,7 @@ requests so an operator can trace the exact call.
 
 ```python
 import httpx
-r = httpx.post("https://wayfinder-production-282b.up.railway.app/v1/decide/support_inbound",
+r = httpx.post("https://wayfinder-backend.buildwithmanish.com/v1/decide/support_inbound",
                headers={"authorization": f"Bearer {WF_KEY}"},
                json={"state": {"body": text}}, timeout=60).json()
 if r["verdict"]["verdict"] == "act":
@@ -114,7 +114,7 @@ else:
 ```
 
 ```ts
-const r = await fetch("https://wayfinder-production-282b.up.railway.app/v1/decide/model_router", {
+const r = await fetch("https://wayfinder-backend.buildwithmanish.com/v1/decide/model_router", {
   method: "POST",
   headers: { "content-type": "application/json", "authorization": `Bearer ${WF_KEY}` },
   body: JSON.stringify({ state: { request } }),

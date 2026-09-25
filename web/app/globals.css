@@ -24,28 +24,30 @@
     --ring: 199 89% 42%;
     --warning: 32 95% 44%;
     --info: 199 89% 42%;
+    --ember: 16 83% 55%;
     --radius: 0.75rem;
   }
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 222 45% 16%;
-    --card-foreground: 210 40% 98%;
+    --background: 152 30% 6%;
+    --foreground: 140 20% 97%;
+    --card: 152 28% 8%;
+    --card-foreground: 140 20% 97%;
     --primary: 142 71% 45%;
     --primary-foreground: 142 76% 10%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 70%;
-    --accent: 217 33% 20%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 152 24% 12%;
+    --secondary-foreground: 140 20% 97%;
+    --muted: 152 22% 11%;
+    --muted-foreground: 150 12% 68%;
+    --accent: 152 24% 14%;
+    --accent-foreground: 140 20% 97%;
     --destructive: 0 91% 71%;
     --destructive-foreground: 222 47% 11%;
-    --border: 215 25% 27%;
-    --input: 215 19% 35%;
+    --border: 150 18% 20%;
+    --input: 150 16% 26%;
     --ring: 199 89% 61%;
     --warning: 43 96% 59%;
     --info: 199 89% 61%;
+    --ember: 16 84% 60%;
   }
 }
 
@@ -109,5 +111,212 @@
   }
   .doc-body img {
     @apply max-w-full h-auto rounded-xl border border-border my-3;
+  }
+  .doc-body h2[id],
+  .doc-body h3[id] {
+    scroll-margin-top: 96px;
+  }
+  .doc-body figure.codeblock {
+    margin: 12px 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: 12px;
+    overflow: hidden;
+    background: hsl(var(--muted));
+  }
+  .doc-body figure.codeblock figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid hsl(var(--border));
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: hsl(var(--muted-foreground));
+  }
+  .doc-body figure.codeblock figcaption button {
+    font: inherit;
+    color: hsl(var(--muted-foreground));
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 200ms ease, background 200ms ease;
+  }
+  .doc-body figure.codeblock figcaption button:hover {
+    color: hsl(var(--ember));
+    background: hsl(var(--accent));
+  }
+  .doc-body figure.codeblock pre {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .doc-body .codetabs {
+    margin: 12px 0;
+  }
+  .doc-body .codetabs [role="tablist"] {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .doc-body .codetabs [role="tab"] {
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: hsl(var(--muted-foreground));
+    background: none;
+    border: 1px solid hsl(var(--border));
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: color 200ms ease, border-color 200ms ease, background 200ms ease;
+  }
+  .doc-body .codetabs [role="tab"]:hover {
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--ember));
+  }
+  .doc-body .codetabs [role="tab"][aria-selected="true"] {
+    color: hsl(var(--ember));
+    border-color: hsl(var(--ember));
+    background: hsl(var(--ember) / 0.08);
+  }
+  .doc-body .codetabs figure.codeblock {
+    margin: 0;
+  }
+  .tok-com { color: hsl(var(--muted-foreground)); font-style: italic; }
+  .tok-str { color: hsl(var(--primary)); }
+  .tok-kw { color: hsl(var(--info)); }
+  .tok-num { color: hsl(var(--warning)); }
+  .tok-fn { color: hsl(var(--ember)); }
+  .tok-key { color: hsl(var(--info)); font-weight: 600; }
+  .tok-var { color: hsl(var(--info)); }
+  .tok-flag { color: hsl(var(--warning)); }
+  .jsonblock {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .jsonblock figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: hsl(var(--muted-foreground));
+  }
+  .jsonblock figcaption button {
+    font: inherit;
+    color: hsl(var(--muted-foreground));
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: color 200ms ease, background 200ms ease;
+  }
+  .jsonblock figcaption button:hover {
+    color: hsl(var(--ember));
+    background: hsl(var(--accent));
+  }
+  .jsonblock pre {
+    margin: 0;
+    max-height: 420px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 14px;
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+}
+
+/* Editorial homepage language (style-transfer): display type, mono kickers,
+   hairline index rules, film grain. Used by web/app/page.tsx only. */
+@layer components {
+  .font-tsj-display { font-family: var(--font-tsj-display), var(--font-display), system-ui, sans-serif; }
+  .font-tsj-grot { font-family: var(--font-tsj-grot), var(--font-display), system-ui, sans-serif; }
+  .font-tsj-mono { font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace; }
+  .text-ember { color: hsl(var(--ember)); }
+  .eyebrow {
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: hsl(var(--muted-foreground));
+  }
+  .section-num {
+    font-family: var(--font-tsj-mono), var(--font-mono), ui-monospace, monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: hsl(var(--ember));
+  }
+  .hairline-t { border-top: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent); }
+  .hairline-b { border-bottom: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent); }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  }
+}
+
+/* Doubtling motion: gentle bob for placed mascots, slower sway for the
+   corner buddy, periodic blink + wave + lamp pulse. Transform/opacity only,
+   frozen under prefers-reduced-motion. */
+@keyframes mascot-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-9px) rotate(2deg); }
+}
+@keyframes mascot-sway {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-6px) rotate(4deg); }
+}
+@keyframes mascot-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+@keyframes mascot-wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-28deg); }
+}
+@keyframes mascot-look {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(2.5px); }
+  60% { transform: translateX(-2.5px); }
+}
+@keyframes mascot-lamp {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+@layer components {
+  .mascot-bob { animation: mascot-bob 3.6s ease-in-out infinite; }
+  .mascot-sway { animation: mascot-sway 5.2s ease-in-out infinite; }
+  .mascot .mascot-blink { animation: mascot-blink 4.8s ease-in-out infinite; }
+  .mascot .mascot-look { animation: mascot-look 7s ease-in-out infinite; }
+  .mascot .mascot-wave { animation: mascot-wave 2.4s ease-in-out infinite; }
+  .mascot .mascot-lamp { animation: mascot-lamp 2s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    .mascot-bob, .mascot-sway,
+    .mascot .mascot-blink, .mascot .mascot-look, .mascot .mascot-wave, .mascot .mascot-lamp { animation: none; }
   }
 }

@@ -1,9 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Spotlight } from "@/components/aceternity/spotlight";
+import { JsonBlock } from "@/components/json-block";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -40,28 +39,39 @@ export default function MetricsPage() {
 
   return (
     <>
-      <div className="mb-4 mt-6">
-        <h1 className="text-4xl font-bold tracking-tight">Metrics.</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Hit rate is the whole game.</p>
+      <div className="mb-8 mt-6">
+        <p className="eyebrow">Wayfinder — runtime</p>
+        <h1 className="mt-2 font-tsj-display text-4xl font-bold tracking-tight md:text-5xl">Metrics</h1>
+        <p className="mt-3 max-w-[68ch] text-sm text-muted-foreground">Hit rate is the whole game.</p>
       </div>
-      <div className="mb-3.5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        {!m ? (
-          <p className="col-span-full text-sm text-muted-foreground">metrics unavailable. Is the gateway running?</p>
+
+      <section aria-label="Key numbers" className="mb-10">
+        <div className="mb-3 flex items-baseline gap-4">
+          <span className="section-num">01</span>
+          <h2 className="font-tsj-display text-xl font-bold tracking-tight">At a glance</h2>
+          {!m && <span className="ml-auto font-tsj-mono text-[11px] text-muted-foreground">metrics unavailable — is the gateway running?</span>}
+        </div>
+        {m ? (
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+            {kpis.map(([k, v]) => (
+              <div key={k} className="hairline-t pt-3">
+                <dt className="font-tsj-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{k}</dt>
+                <dd className="mt-1 font-tsj-display text-4xl font-bold tabular-nums tracking-tight">{v}</dd>
+              </div>
+            ))}
+          </dl>
         ) : (
-          kpis.map(([k, v]) => (
-            <Card key={k}>
-              <CardContent className="pt-4">
-                <div className="text-[11px] uppercase tracking-widest text-muted-foreground">{k}</div>
-                <div className="text-[26px] font-bold tabular-nums tracking-tight">{v}</div>
-              </CardContent>
-            </Card>
-          ))
+          <Skeleton className="h-[120px]" />
         )}
-      </div>
-      {m ? (
-        <Spotlight className="mb-3.5 rounded-lg">
-        <Card>
-          <CardContent className="flex items-center gap-5 pt-5" role="img" aria-label={`Cache hit rate ${(hit * 100).toFixed(1)} percent`}>
+      </section>
+
+      <section aria-label="Cache hit rate" className="mb-10">
+        <div className="mb-3 flex items-baseline gap-4">
+          <span className="section-num">02</span>
+          <h2 className="font-tsj-display text-xl font-bold tracking-tight">Hit rate</h2>
+        </div>
+        {m ? (
+          <div className="hairline-t flex flex-wrap items-center gap-6 pt-5" role="img" aria-label={`Cache hit rate ${(hit * 100).toFixed(1)} percent`}>
             <svg viewBox="0 0 120 120" aria-hidden="true" className="size-[120px] flex-none">
               <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--border))" strokeWidth="10" />
               <circle
@@ -71,27 +81,27 @@ export default function MetricsPage() {
               />
             </svg>
             <div>
-              <div className="text-3xl font-bold tabular-nums tracking-tight">{(hit * 100).toFixed(1)}%</div>
-              <CardDescription>cache hit rate. Repeats never touch the model.</CardDescription>
+              <div className="font-tsj-display text-5xl font-bold tabular-nums tracking-tight">{(hit * 100).toFixed(1)}%</div>
+              <p className="mt-1 font-tsj-mono text-xs text-muted-foreground">cache hit rate · repeats never touch the model</p>
             </div>
-          </CardContent>
-        </Card>
-        </Spotlight>
-      ) : (
-        <Skeleton className="mb-3.5 h-[160px]" />
-      )}
-      <Card>
-        <CardContent className="pt-5">
-          <Label>Runtime config</Label>
-          <pre className="mt-2 max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-md border bg-background p-3.5 font-mono text-xs leading-6" tabIndex={0}>
-            {JSON.stringify(health, null, 2)}
-          </pre>
-          <p className="mt-3 flex flex-wrap items-center gap-3">
-            <Button variant="outline" onClick={refresh}>Refresh now</Button>
-            <span className="text-[13px] text-muted-foreground">auto-refreshes every 3s while open</span>
-          </p>
-        </CardContent>
-      </Card>
+          </div>
+        ) : (
+          <Skeleton className="h-[160px]" />
+        )}
+      </section>
+
+      <section aria-label="Runtime config">
+        <div className="mb-3 flex items-baseline gap-4">
+          <span className="section-num">03</span>
+          <h2 className="font-tsj-display text-xl font-bold tracking-tight">Runtime config</h2>
+        </div>
+        <Label className="sr-only">Runtime config</Label>
+        <JsonBlock label="Runtime config" data={health} />
+        <p className="mt-3 flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={refresh}>Refresh now</Button>
+          <span className="font-tsj-mono text-xs text-muted-foreground">auto-refreshes every 3s while open</span>
+        </p>
+      </section>
     </>
   );
 }

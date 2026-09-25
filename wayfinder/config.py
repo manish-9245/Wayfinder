@@ -50,6 +50,9 @@ class Settings:
     # quickstart and no-weights CI stay zero-config; enable in any deployment
     # that serves untrusted clients.
     require_auth: bool = _env_bool("WAYFINDER_REQUIRE_AUTH", False)
+    # Swagger UI / ReDoc / openapi.json. On for local DX; set WAYFINDER_DOCS=0
+    # in any public deployment so the interactive API explorer isn't exposed.
+    docs: bool = _env_bool("WAYFINDER_DOCS", True)
     # --- safety rails (mirror laya/serve.py so one mental model covers both) ---
     max_questions: int = _env_int("WAYFINDER_MAX_QUESTIONS", 64)
     max_state_chars: int = _env_int("WAYFINDER_MAX_STATE_CHARS", 50000)

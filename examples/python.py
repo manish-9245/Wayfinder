@@ -3,7 +3,7 @@ import os
 
 import httpx
 
-BASE = os.getenv("WAYFINDER_URL", "https://wayfinder-production-282b.up.railway.app")
+BASE = os.getenv("WAYFINDER_URL", "https://wayfinder-backend.buildwithmanish.com")
 KEY = os.environ["WF_KEY"]  # dashboard → API keys
 
 

@@ -33,7 +33,6 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from wayfinder.auth import Caller, resolve_caller, supertokens_ready
@@ -202,7 +201,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="wayfinder", version="0.1.0", lifespan=lifespan,
-              description="Universal doubt layer: one policy call, calibrated act/escalate/block verdict.")
+              description="Universal doubt layer: one policy call, calibrated act/escalate/block verdict.",
+              docs_url="/docs" if settings.docs else None,
+              redoc_url="/redoc" if settings.docs else None,
+              openapi_url="/openapi.json" if settings.docs else None)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 if settings.supertokens_enabled:
     # Cross-domain dashboard (web/ ≠ gateway host): explicit origins +
@@ -227,10 +229,6 @@ if _MCP_APP is not None:
     # wrapper; request IDs + hardening headers come from the middleware above.
     app.mount("/mcp", _MCP_APP)
     log.info("mounted hosted mcp endpoint at /mcp")
-
-_UI_DIR = Path(__file__).parent.parent / "ui"
-if _UI_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(_UI_DIR)), name="static")
 
 
 @app.middleware("http")
@@ -609,11 +607,9 @@ async def predict_batch(req: BatchRequest, request: Request,
 
 
 @app.get("/")
-def index() -> FileResponse:
-    idx = _UI_DIR / "index.html"
-    if idx.exists():
-        return FileResponse(str(idx), media_type="text/html")
-    return JSONResponse({"service": "wayfinder", "docs": "/docs", "policies": "/policies", "health": "/health"})
+def index() -> Dict[str, Any]:
+    """API service map. UI lives in the Next.js frontend, never here."""
+    return {"service": "wayfinder", "docs": "/docs", "policies": "/policies", "health": "/health"}
 
 
 def main() -> None:
