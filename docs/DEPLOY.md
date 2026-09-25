@@ -1,14 +1,50 @@
 # Deploy
 
-Wayfinder is a hosted solution: the gateway, checkpoints, cache, and
-dashboards run for you at
-`https://wayfinder-backend.buildwithmanish.com`. Sign in on this site,
-create a `wf_…` key in the [dashboard](/dashboard), and call the
+Wayfinder is two services behind two domains:
+
+| Service | Host | Source |
+|---|---|---|
+| `wayfinder` (FastAPI gateway, API only) | `https://wayfinder-backend.buildwithmanish.com` | repo root `Dockerfile` |
+| `wayfinder-web` (Next.js frontend, the only UI) | `https://wayfinder.buildwithmanish.com` | `web/` dir, `web/Dockerfile` |
+
+Sign in on the site, create a `wf_…` key in the dashboard, and call the
 [API](API.md) or [MCP](MCP.md) endpoint. No install, no weights, no ops.
 
-Running your own copy (source, local setup, Docker/Kubernetes runbook,
-operator env reference) lives on
-[GitHub](https://github.com/manish-9245/Wayfinder).
+## How shipping works here
+
+- GitHub auto-deploy is **off**. Deploys go out via the Railway CLI:
+  `railway up` from the repo root for the gateway (`wayfinder` service),
+  `railway up` from `web/` for the frontend (`wayfinder-web` service).
+- `wayfinder-web` builds with **Root Directory `web`** and Dockerfile Path
+  `Dockerfile`. If it ever builds the Python image, this setting drifted —
+  the symptom is the frontend domain serving the gateway JSON map.
+
+## Production env (gateway)
+
+- `WAYFINDER_DOCS=0` — hides Swagger UI, ReDoc, and `/openapi.json`.
+  Local keeps them on for DX.
+- `WAYFINDER_REQUIRE_AUTH=1`, `WAYFINDER_API_KEY`, quotas, and SuperTokens
+  vars per the [runbook on GitHub](https://github.com/manish-9245/Wayfinder).
+
+## Production env (frontend)
+
+- `WAYFINDER_API_URL=http://wayfinder.railway.internal:${{wayfinder.PORT}}`
+  — server-to-server over Railway private networking. Never point this at
+  the public backend URL: Cloudflare bot protection 403s datacenter
+  fetchers, and you would pay an extra public hop per request.
+- `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_WEBSITE_DOMAIN` =
+  `https://wayfinder.buildwithmanish.com`.
+
+## Domains & TLS (Cloudflare)
+
+- Both hostnames are proxied CNAMEs to their Railway targets. TLS is the
+  zone Universal cert, whose `*.buildwithmanish.com` wildcard covers
+  **one level only** — nested subdomains like `backend.wayfinder.*` get no
+  edge cert and fail TLS. Keep all hostnames single-level.
+- To move a custom domain between Railway services: remove it from the old
+  service first (dashboard; the CLI cannot remove domains), then
+  `railway domain <host>` on the new one and point the CNAME at the
+  returned target.
 
 ## Getting the most out of hosted
 

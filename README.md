@@ -52,7 +52,7 @@ Set `WAYFINDER_PRELOAD=1` in production so language flips cost under 1ms.
 | POST | `/predict/batch` | 1-128 states, shared forward passes (about 1ms/q batched on GPU) |
 | GET | `/policies` `?full=1` | Catalogue, or full schemas for builders |
 | GET | `/health` `/metrics` | Readiness probe, hit-rate/latency/block counters |
-| GET | `/docs` | OpenAPI playground |
+| GET | `/docs` | OpenAPI playground (local only; disabled in prod via `WAYFINDER_DOCS=0`) |
 
 Policies ship in `wayfinder/policies.yaml`: `llm_firewall`, `support_inbound`,
 `model_router`, `content_safety`. Thresholds are per-call overridable via

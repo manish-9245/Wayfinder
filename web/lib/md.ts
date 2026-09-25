@@ -3,6 +3,8 @@ import { highlightCode, langLabel } from "@/lib/highlight";
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
+const UNSAFE_HREF = /^(javascript|data|vbscript|file):/i;
+
 const inline = (s: string) =>
   esc(s)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
@@ -11,7 +13,8 @@ const inline = (s: string) =>
       const url = /^(https?:|data:|\/)/.test(src) ? src : `/api/docs-files/${src}`;
       return `<img src="${url}" alt="${alt}" loading="lazy" />`;
     })
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, href) =>
+      UNSAFE_HREF.test(href) ? esc(text) : `<a href="${href}">${text}</a>`);
 
 const slugCounts = new Map<string, number>();
 function slugify(text: string): string {

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { canHandleRoute, getRoutingComponent } from "supertokens-auth-react/ui";
 import { AUTH_OFF, preBuiltUI } from "@/lib/supertokens";
+import { safeNext } from "@/lib/login-redirect";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 function LoginNotice() {
   const params = useSearchParams();
   const message = params.get("message");
-  const next = params.get("next");
+  const next = safeNext(params.get("next"));
   if (!message && !next) return null;
   return (
     <Alert className="mx-auto mb-4 max-w-2xl">
