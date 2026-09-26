@@ -28,10 +28,12 @@ Sign in on the site, create a `wf_…` key in the dashboard, and call the
 
 ## Production env (frontend)
 
-- `WAYFINDER_API_URL=http://wayfinder.railway.internal:${{wayfinder.PORT}}`
-  — server-to-server over Railway private networking. Never point this at
-  the public backend URL: Cloudflare bot protection 403s datacenter
-  fetchers, and you would pay an extra public hop per request.
+- `WAYFINDER_API_URL=http://wayfinder.railway.internal:8000`
+  — server-to-server over Railway private networking (the gateway listens
+  on 8000). Do not use a `${{wayfinder.PORT}}` reference (resolves empty)
+  and never point this at the public backend URL: Cloudflare bot
+  protection 403s datacenter fetchers, and you would pay an extra public
+  hop per request.
 - `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_WEBSITE_DOMAIN` =
   `https://wayfinder.buildwithmanish.com`.
 
