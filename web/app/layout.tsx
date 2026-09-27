@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono, Bricolage_Grotesque, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+// Self-hosted (next/font/local): the Railway builder cannot reliably reach
+// Google Fonts at build time, and a font fetch failure fails the whole
+// build. Variable files in ./fonts cover every weight below.
+import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import SuperTokensProvider from "@/components/SuperTokensProvider";
 import SiteBackdrop from "@/components/site-backdrop";
@@ -9,12 +12,19 @@ import RouteFocus from "@/components/RouteFocus";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const display = Outfit({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"], variable: "--font-display", display: "swap" });
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono", display: "swap" });
+const display = localFont({ src: "./fonts/outfit-variable.woff2", variable: "--font-display", display: "swap" });
+const mono = localFont({ src: "./fonts/jetbrains_mono-variable.woff2", variable: "--font-mono", display: "swap" });
 // Editorial homepage type (style-transfer): display/UI/mono voices for the landing page only.
-const tsjDisplay = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-tsj-display", display: "swap" });
-const tsjGrot = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-tsj-grot", display: "swap" });
-const tsjMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-tsj-mono", display: "swap" });
+const tsjDisplay = localFont({ src: "./fonts/bricolage_grotesque-variable.woff2", variable: "--font-tsj-display", display: "swap" });
+const tsjGrot = localFont({ src: "./fonts/space_grotesk-variable.woff2", variable: "--font-tsj-grot", display: "swap" });
+const tsjMono = localFont({
+  src: [
+    { path: "./fonts/ibm_plex_mono-400.woff2", weight: "400" },
+    { path: "./fonts/ibm_plex_mono-500.woff2", weight: "500" },
+  ],
+  variable: "--font-tsj-mono",
+  display: "swap",
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
