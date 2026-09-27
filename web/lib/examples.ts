@@ -79,6 +79,30 @@ export const EXAMPLES: Example[] = [
     state: { post: "I know where your office is. It would be a shame if something happened to the servers on Friday." },
     note: "No profanity, still a threat. Tests severity scoring.",
   },
+  {
+    label: "Hot lead with budget",
+    policy: "lead_scoring",
+    state: { body: "We need SSO for 200 seats by end of month, I own budget. Send pricing?" },
+    note: "Specific need, this-month timeline, decides + explicit budget. Expect hot.",
+  },
+  {
+    label: "Tire-kicker",
+    policy: "lead_scoring",
+    state: { body: "Just browsing, maybe next year, student project." },
+    note: "No problem, no timeline, no authority. Expect cold or not_sales.",
+  },
+  {
+    label: "Buyer-intent query",
+    policy: "seo_intent",
+    state: { text: "best crm for 20 person agency pricing" },
+    note: "Comparing language with pricing. Expect commercial.",
+  },
+  {
+    label: "Link pair with reason",
+    policy: "seo_internal_link",
+    state: { source_url: "/technical-seo-checklist", passage: "A crawl reveals useful pages with few contextual internal links.", candidate_title: "How to find orphan pages", candidate_purpose: "Diagnose underlinked pages and reconnect them" },
+    note: "Direct continuation with anchorable passage. Expect high relevance.",
+  },
 ];
 
 export const SAMPLE_BATCH: { state: unknown }[] = [

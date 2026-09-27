@@ -44,6 +44,8 @@ def _client(**env):
 def test_policies_load_and_validate():
     pols = load_policies("wayfinder/policies.yaml")
     assert {"llm_firewall", "support_inbound", "model_router", "content_safety"} <= set(pols)
+    assert {"lead_scoring", "seo_internal_link", "seo_intent", "seo_audit",
+            "seo_prospect", "seo_gate", "seo_answer"} <= set(pols)
 
 
 def test_firewall_blocks_high_risk():
@@ -91,6 +93,51 @@ def test_batch():
     r = c.post("/predict/batch", json={"states": [{"body": "a"}, {"body": "b"}],
                                         "policy": "support_inbound"})
     assert r.json()["count"] == 2
+    # policy batches carry per-row verdicts for CSV export
+    assert "verdict" in r.json()["results"][0]
+
+
+def test_options_optional_and_overrides():
+    c = _client()
+    # omitted entirely -> policy defaults
+    r0 = c.post("/v1/decide/lead_scoring", json={"state": {"body": "need SSO, budget owner"}})
+    assert r0.status_code == 200
+    assert r0.json()["thresholds"] == {"auto_act_above": 0.80, "escalate_below": 0.50}
+    # null / {} also mean defaults
+    for opts in (None, {}):
+        body: dict = {"state": {"body": "hi"}}
+        if opts is not None:
+            body["options"] = opts
+        # None serializes to null via json; {} stays {}
+        r = c.post("/v1/decide/lead_scoring", json=body)
+        assert r.status_code == 200
+    # partial override honored, rest stays default
+    r1 = c.post("/v1/decide/lead_scoring",
+                json={"state": {"body": "hi"}, "options": {"auto_act_above": 0.95}})
+    assert r1.json()["thresholds"]["auto_act_above"] == 0.95
+    assert r1.json()["thresholds"]["escalate_below"] == 0.50
+    # out-of-range rejected, never silently clamped
+    r2 = c.post("/v1/decide/lead_scoring",
+                json={"state": {"body": "hi"}, "options": {"auto_act_above": 1.5}})
+    assert r2.status_code == 422
+    # batch honors optional overrides too
+    rb = c.post("/predict/batch", json={"states": [{"body": "a"}],
+                                        "policy": "lead_scoring",
+                                        "options": {"auto_act_above": 0.9}})
+    assert rb.json()["thresholds"]["auto_act_above"] == 0.9
+    rb2 = c.post("/predict/batch", json={"states": [{"body": "a"}],
+                                         "policy": "lead_scoring"})
+    assert rb2.json()["thresholds"] == {"auto_act_above": 0.80, "escalate_below": 0.50}
+
+
+def test_lead_and_seo_policies_answer():
+    c = _client()
+    r = c.post("/v1/decide/lead_scoring", json={"state": {"body": "need SSO this month, I own budget"}})
+    assert r.status_code == 200
+    assert set(r.json()["answers"]) == {"is_sales_enquiry", "need", "timeline", "authority", "budget"}
+    r = c.post("/v1/decide/seo_intent", json={"state": {"text": "best crm pricing"}})
+    assert r.json()["answers"]["intent"]["choice"] in (
+        r.json()["answers"]["intent"]["probabilities"].keys())
 
 
 def test_policies_full_schema():

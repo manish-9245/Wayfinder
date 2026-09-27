@@ -26,6 +26,8 @@ const POLICIES = [
   { pol: "support_inbound", index: "02", title: "Support inbound", body: "Department, urgency, churn and refund risk in any language.", tag: "tickets · email · queues" },
   { pol: "model_router", index: "03", title: "Model router", body: "Small model, frontier model, or a human. Decided per request.", tag: "gateways · cost control" },
   { pol: "content_safety", index: "04", title: "Content safety", body: "Toxicity, threats and severity scored in milliseconds.", tag: "UGC · marketplaces" },
+  { pol: "lead_scoring", index: "05", title: "Lead scoring", body: "Need, timeline, authority, budget per lead. 700 rows to CSV in seconds.", tag: "sales · CSV + confidence" },
+  { pol: "seo_internal_link", index: "06", title: "SEO internal links", body: "1200 pages judged pair-by-pair, honest links only, confidence per row.", tag: "SEO · bulk" },
 ];
 
 const STATS = [
@@ -221,7 +223,6 @@ export default function Home() {
           <nav className="mt-14 flex flex-wrap justify-center gap-x-6 gap-y-2 font-tsj-mono text-[12px] uppercase tracking-[0.14em]" aria-label="Footer">
             <Link href="/docs" className="text-muted-foreground hover:text-foreground">API reference</Link>
             <Link href="/docs" className="text-muted-foreground hover:text-foreground">MCP server</Link>
-            <Link href="/docs" className="text-muted-foreground hover:text-foreground">Deploy guide</Link>
             <Link href="/metrics" className="text-muted-foreground hover:text-foreground">Status</Link>
             <Link href="/legal" className="text-muted-foreground hover:text-foreground">Privacy and terms</Link>
             <a href="https://github.com/manish-9245/Wayfinder" className="text-muted-foreground hover:text-foreground">

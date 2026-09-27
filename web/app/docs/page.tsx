@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Braces, Plug, Rocket, ShieldCheck } from "lucide-react";
+import { Braces, Plug, ShieldCheck } from "lucide-react";
 import { api, toast } from "@/lib/api";
 import { extractToc, md, type TocEntry } from "@/lib/md";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,9 +8,8 @@ import { cn } from "@/lib/utils";
 
 const DOCS = [
   ["API", "API.md", Braces, "Endpoints, verdicts, thresholds"],
-  ["Policies", "POLICIES.md", ShieldCheck, "The four decision bundles"],
+  ["Policies", "POLICIES.md", ShieldCheck, "The eleven decision bundles"],
   ["MCP", "MCP.md", Plug, "Claude Desktop & Cursor setup"],
-  ["Deploy", "DEPLOY.md", Rocket, "Docker, Railway & production"],
 ] as const;
 
 export default function DocsPage() {

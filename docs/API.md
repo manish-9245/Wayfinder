@@ -29,7 +29,7 @@ curl $WF_URL/v1/decide/support_inbound \
 | `model` | omit to auto-route by language; or `english` / `multilingual` / `typed-decisions` |
 | `task` | optional task override for the typed-decisions checkpoint |
 | `lang` | ISO code hint; skips detection when you already know it |
-| `options.auto_act_above` / `options.escalate_below` | per-call threshold overrides |
+| `options` | **optional** — omit, `null`, or `{}` for policy defaults; or `{"auto_act_above": 0.9, "escalate_below": 0.5}` to override per call (each 0-1) |
 
 Response: `answers` + `routing` + `usage`, plus:
 
@@ -61,6 +61,8 @@ Raw `{state, questions}` with auto-routing. Question schema: `choice` needs
 
 Up to 128 states against one questions schema (or `policy`). Cache hits are
 resolved without touching the model; misses share forward passes.
+When `policy` is set, each result also carries `verdict` + `thresholds`
+(policy defaults unless `options` overrides them) — ready for CSV export.
 
 ```bash
 curl $WF_URL/predict/batch \
@@ -68,6 +70,9 @@ curl $WF_URL/predict/batch \
   "states": [{"body": "refund pls"}, {"body": "server down!"}],
   "policy": "support_inbound"
 }'
+# bulk leads: 700 rows = 6 calls of ≤128; each row → answers + verdict + confidence
+# bulk SEO: states = [{source_url, passage, candidate_title, ...}] with policy seo_internal_link
+# options is optional here too: "options": {"auto_act_above": 0.8}
 ```
 
 ## POST /mcp/

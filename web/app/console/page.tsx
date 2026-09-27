@@ -33,6 +33,34 @@ const POLICY_CONTEXT: Record<string, { use: string; reads: string }> = {
     use: "Score user posts and uploads. Best for communities, marketplaces, and UGC feeds.",
     reads: "Allow means publish. Review means queue for a moderator. Block means toxic or threatening content.",
   },
+  lead_scoring: {
+    use: "Score inbound leads on need, timeline, authority, budget. Weights live in your code; best for bulk CSV scoring.",
+    reads: "Act means hot and confident. Review means warm — ask the qualifying question. Low confidence is never cold.",
+  },
+  seo_internal_link: {
+    use: "Judge one source passage plus candidate target for honest link fit. Batch pairs; never invent URLs.",
+    reads: "Act means link with confidence. Review means editor should glance. Escalate means no honest reason.",
+  },
+  seo_intent: {
+    use: "Map queries or pages to intent. Best for Search Console exports in the thousands.",
+    reads: "High confidence auto-tags. Low confidence queues for review — check the runner-up distribution.",
+  },
+  seo_audit: {
+    use: "Triage pages to keep, refresh, merge, or remove. Join with traffic data in code.",
+    reads: "Act on keep/refresh when confident. Merge/remove always deserve a second look.",
+  },
+  seo_prospect: {
+    use: "Score link prospects for relevance and message fit before outreach.",
+    reads: "High relevance plus message fit means send. Mismatches get flagged first.",
+  },
+  seo_gate: {
+    use: "Pre-publish gate for AI drafts: intent match, grounded claims, sane links.",
+    reads: "All three high means publish. Anything else queues for a human.",
+  },
+  seo_answer: {
+    use: "Score one page against one real buyer question for AI-search coverage.",
+    reads: "High means answered. Low means gap — write the page or fix the thin one.",
+  },
 };
 
 function SectionNum({ n, title, hint }: { n: string; title: string; hint?: string }) {

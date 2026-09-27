@@ -21,7 +21,7 @@ checkpoints. Wayfinder turns that into infrastructure any stack can call:
 | Raw answers | Plus a **verdict** from per-policy thresholds |
 | Your own caching | sha256 LRU in process, Redis shared across replicas, 1h TTL |
 | Your own logging | PII-scrubbed audit line per decision, `/metrics` counters |
-| Your own YAML | `wayfinder/policies.yaml`: 4 reviewed bundles with thresholds |
+| Your own YAML | `wayfinder/policies.yaml`: 11 reviewed bundles with thresholds |
 | Your own clients | Next.js console, MCP stdio server, curl/Python/TS snippets |
 
 ## 30-second start (gateway + UI)
@@ -49,14 +49,36 @@ Set `WAYFINDER_PRELOAD=1` in production so language flips cost under 1ms.
 | POST | `/v1/decide/{policy}` | Named policy (YAML questions + thresholds) plus verdict |
 | POST | `/v1/systemone` | Jev-compatible: existing Jev clients repoint `baseUrl` here unchanged |
 | POST | `/predict` | Raw `{state, questions}` with auto-routing |
-| POST | `/predict/batch` | 1-128 states, shared forward passes (about 1ms/q batched on GPU) |
+| POST | `/predict/batch` | 1-128 states, shared forward passes (about 1ms/q batched on GPU); with `policy`, each row also returns `verdict` + `thresholds` |
 | GET | `/policies` `?full=1` | Catalogue, or full schemas for builders |
 | GET | `/health` `/metrics` | Readiness probe, hit-rate/latency/block counters |
 | GET | `/docs` | OpenAPI playground (local only; disabled in prod via `WAYFINDER_DOCS=0`) |
 
 Policies ship in `wayfinder/policies.yaml`: `llm_firewall`, `support_inbound`,
-`model_router`, `content_safety`. Thresholds are per-call overridable via
-`{"options": {"auto_act_above": 0.9}}`. Full reference: [`docs/API.md`](docs/API.md).
+`model_router`, `content_safety`, `lead_scoring`, `seo_internal_link`,
+`seo_intent`, `seo_audit`, `seo_prospect`, `seo_gate`, `seo_answer`.
+Thresholds (`options`) are fully optional per call — omit for policy defaults.
+Full reference: [`docs/API.md`](docs/API.md).
+
+## Bulk scoring → CSV (leads, SEO)
+
+Seven policies cover Jev-style bulk workflows: `lead_scoring` plus six SEO
+jobs (`seo_internal_link`, `seo_intent`, `seo_audit`, `seo_prospect`,
+`seo_gate`, `seo_answer`). The model judges text; weights, firmographic fit,
+and date math stay in your code. Batch 128 rows per `/predict/batch` call —
+each row comes back with answers, `verdict`, and `confidence`, ready for CSV:
+
+```bash
+python examples/lead_scoring.py leads.json --out scored.csv
+# --auto-act-above 0.9 --escalate-below 0.5  (optional confidence override)
+
+python examples/seo_bulk.py internal_link --out links.csv
+python examples/seo_bulk.py intent --input queries.json --out intent.csv
+# jobs: internal_link | intent | audit | prospect | gate | answer
+```
+
+Low confidence never forces a decision: lead rows below 0.5 confidence land
+`warm` (ask the qualifying question), SEO rows queue for editor review.
 
 ## Any-stack integration
 

@@ -71,7 +71,8 @@ class DecideRequest(BaseModel):
     model: Optional[str] = Field(default=None, description="Pin a checkpoint: english|multilingual|typed-decisions")
     task: Optional[str] = None
     lang: Optional[str] = Field(default=None, description="ISO code hint; skips detection")
-    options: Dict[str, Any] = Field(default_factory=dict, description="Per-call overrides: auto_act_above, escalate_below")
+    # Optional per-call confidence overrides. Omit entirely to use policy defaults.
+    options: Optional[Dict[str, Any]] = Field(default=None, description="Optional overrides: auto_act_above, escalate_below")
 
 
 class RawPredictRequest(DecideRequest):
@@ -85,6 +86,28 @@ class BatchRequest(BaseModel):
     model: Optional[str] = None
     task: Optional[str] = None
     lang: Optional[str] = None
+    # Optional per-call confidence overrides, applied to verdicts when policy is set.
+    options: Optional[Dict[str, Any]] = Field(default=None, description="Optional overrides: auto_act_above, escalate_below")
+
+
+def _effective_thresholds(policy: Dict[str, Any], options: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Merge policy defaults with optional per-call overrides.
+
+    Overrides are fully optional: omit `options`, pass null/{}, or pass a
+    subset. Only `auto_act_above` / `escalate_below` are honored, each must be
+    a number in [0, 1]. Never mutates the stored policy.
+    """
+    eff = dict(policy)
+    for k in ("auto_act_above", "escalate_below"):
+        if options and k in options and options[k] is not None:
+            try:
+                v = float(options[k])
+            except (TypeError, ValueError):
+                raise HTTPException(status_code=422, detail=f"options.{k} must be a number in [0, 1]")
+            if not 0.0 <= v <= 1.0:
+                raise HTTPException(status_code=422, detail=f"options.{k} must be in [0, 1]")
+            eff[k] = v
+    return eff
 
 
 # --------------------------------------------------------------------------- #
@@ -440,10 +463,7 @@ async def decide(policy: str, req: DecideRequest, request: Request,
         record_request(0, error=True, status_code=exc.status_code, policy=policy)
         raise
     pol = _policy_or_422(policy)
-    eff = dict(pol)
-    for k in ("auto_act_above", "escalate_below"):
-        if k in (req.options or {}):
-            eff[k] = req.options[k]
+    eff = _effective_thresholds(pol, req.options)
     questions = eff["questions"]
     try:
         check_state(req.state, questions)
@@ -563,15 +583,23 @@ async def predict_batch(req: BatchRequest, request: Request,
         raise
     if req.policy:
         try:
-            questions = _policy_or_422(req.policy)["questions"]
+            _pol = _policy_or_422(req.policy)
+            questions = _pol["questions"]
+            eff = _effective_thresholds(_pol, req.options)
         except HTTPException as exc:
             _record(ctx, request, policy=policy_name, error=True, status_code=exc.status_code)
             record_request(0, error=True, status_code=exc.status_code, policy=policy_name)
             raise
+    else:
+        eff = None
     if not questions:
         _record(ctx, request, policy=policy_name, error=True, status_code=422)
         record_request(0, error=True, status_code=422, policy=policy_name)
         raise HTTPException(status_code=422, detail="supply questions or a policy")
+    # Validate optional overrides even for raw-questions batches (no verdict,
+    # but fail fast on out-of-range values instead of silently ignoring).
+    if req.options and not req.policy:
+        _effective_thresholds({"auto_act_above": 0.85, "escalate_below": 0.60}, req.options)
     if len(req.states) > 128:
         _record(ctx, request, policy=policy_name, error=True, status_code=413)
         record_request(0, error=True, status_code=413, policy=policy_name)
@@ -600,10 +628,30 @@ async def predict_batch(req: BatchRequest, request: Request,
             for idx, res in zip(to_run, ran):
                 CACHE.set(cache_key(req.states[idx], questions, req.model), res)
                 results[idx] = {**res, "cache_hit": False}
+    # Attach per-row verdicts when a named policy was used, so bulk CSV
+    # exports (700 leads, 1200 pages) carry confidence without a second call.
+    # Thresholds are the policy defaults unless req.options overrides them.
+    if req.policy and eff is not None:
+        from wayfinder.policies import verdict_for as _verdict_for
+
+        for r in results:
+            try:
+                r["verdict"] = _verdict_for(eff, r.get("answers", {}))
+                r["thresholds"] = {"auto_act_above": eff.get("auto_act_above"),
+                                   "escalate_below": eff.get("escalate_below")}
+                r["policy"] = policy_name
+            except Exception:
+                pass
+        out: Dict[str, Any] = {"count": len(results), "results": results,
+                               "policy": policy_name,
+                               "thresholds": {"auto_act_above": eff.get("auto_act_above"),
+                                              "escalate_below": eff.get("escalate_below")}}
+    else:
+        out = {"count": len(results), "results": results}
     record_request(t.ms, policy=policy_name)
     _record(ctx, request, policy=policy_name, latency_ms=t.ms,
             state=f"batch count={len(results)}")
-    return {"count": len(results), "results": results}
+    return out
 
 
 @app.get("/")

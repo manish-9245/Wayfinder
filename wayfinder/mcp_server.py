@@ -116,7 +116,7 @@ def wayfinder_policies_tool() -> str:
                  "act/review/escalate (or allow/review/block) verdict. " + _GUARDRAILS),
 )
 def wayfinder_decide_tool(policy: str, state: dict, model: Optional[str] = None) -> str:
-    """Run a named policy (llm_firewall | support_inbound | model_router | content_safety)."""
+    """Run a named policy (llm_firewall | support_inbound | model_router | content_safety | lead_scoring | seo_internal_link | seo_intent | seo_audit | seo_prospect | seo_gate | seo_answer)."""
     try:
         pols = policies()
         if policy not in pols:

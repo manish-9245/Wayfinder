@@ -1,7 +1,7 @@
 # Policies
 
 Each policy = description + thresholds + a `questions` mapping in the
-`choice` | `score` | `noul` schema. The hosted gateway ships four reviewed
+`choice` | `score` | `noul` schema. The hosted gateway ships eleven reviewed
 bundles; custom policy files are a self-hosting feature — see
 [GitHub](https://github.com/manish-9245/Wayfinder).
 
@@ -39,18 +39,27 @@ question named. Never silently.
 - `support_inbound` → `act/review/escalate` with department/urgency/churn/refund.
 - `model_router` → `small/frontier/human` per request.
 - `content_safety` → `allow/review/block` on toxic/threat/severity.
+- `lead_scoring` → `act(hot)/review(warm)/escalate(cold)` on is_sales_enquiry/need/timeline/authority/budget. Weights live in your code; low confidence means warm, never cold.
+- `seo_internal_link` → per source+candidate pair: relevance score + has_reason + anchor_ready. Batch pairs via `/predict/batch`; never invent URLs.
+- `seo_intent` → `choice` intent for queries/pages (informational/commercial/transactional/navigational/support/other).
+- `seo_audit` → `choice` keep/refresh/merge/remove + freshness score.
+- `seo_prospect` → relevance score + message_fit for link outreach.
+- `seo_gate` → pre-publish `noul` trio: intent_match/grounded/links_sane.
+- `seo_answer` → answer_relevance score of one page against one buyer question.
 
-## Per-call overrides
+## Per-call overrides (optional)
 
 ```bash
 export WF_URL=https://wayfinder-backend.buildwithmanish.com
 export WF_KEY=wf_…   # dashboard → API keys
+# options is fully optional: omit it, pass null/{}, or override one threshold.
 curl $WF_URL/v1/decide/support_inbound \
   -H "authorization: Bearer $WF_KEY" -H 'content-type: application/json' -d '{
   "state": {...},
-  "model": "multilingual",
-  "options": {"auto_act_above": 0.9, "escalate_below": 0.5}
+  "model": "multilingual"
 }'
+# with optional confidence override:
+# "options": {"auto_act_above": 0.9, "escalate_below": 0.5}
 ```
 
 `model` pins a checkpoint (`english|multilingual|typed-decisions`); omit to

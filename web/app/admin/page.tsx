@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Tab = "overview" | "users" | "keys" | "logs" | "system";
 const PAGE = 25;
-const POLICIES = ["llm_firewall", "support_inbound", "model_router", "content_safety"];
+const POLICIES = ["llm_firewall", "support_inbound", "model_router", "content_safety", "lead_scoring", "seo_internal_link", "seo_intent", "seo_audit", "seo_prospect", "seo_gate", "seo_answer"];
 const VERDICTS = ["act", "allow", "review", "escalate", "block"];
 
 const MONO_TH = "font-tsj-mono text-[11px] uppercase tracking-[0.14em]";
