@@ -20,6 +20,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    // Renamed setup guides (content now covers using the API and the local
+    // repo — no app-deployment walkthroughs). Keep old URLs working.
+    return [
+      { source: "/blog/deploy-railway", destination: "/blog/use-in-your-project", permanent: true },
+      { source: "/blog/self-host-docker", destination: "/blog/run-github-repo-locally", permanent: true },
+      { source: "/blog/local-dev-mcp", destination: "/blog/run-github-repo-locally", permanent: true },
+    ];
+  },
   async rewrites() {
     // Single /api/* namespace: page routes (/policies, /metrics, …) always win
     // over rewrites, so proxying bare paths would serve HTML to fetch().

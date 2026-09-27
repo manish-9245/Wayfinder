@@ -8,7 +8,14 @@ const UNSAFE_HREF = /^(javascript|data|vbscript|file):/i;
 const inline = (s: string) =>
   esc(s)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/~~([^~\s][^~]*?)~~/g, "<del>$1</del>")
+    .replace(/==([^=\s][^=]*?)==/g, "<mark>$1</mark>")
+    .replace(/\+\+([^+\s][^+]*?)\+\+/g, "<u>$1</u>")
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    // Single-asterisk / single-underscore italics. Word boundaries keep
+    // snake_case identifiers (auto_act_above) and a*b math untouched.
+    .replace(/(?<![\w*])\*([^*\s][^*]*?)\*(?![\w*])/g, "<em>$1</em>")
+    .replace(/(?<![\w])_([^_\s][^_]*?)_(?![\w])/g, "<em>$1</em>")
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, src) => {
       const url = /^(https?:|data:|\/)/.test(src) ? src : `/api/docs-files/${src}`;
       return `<img src="${url}" alt="${alt}" loading="lazy" />`;

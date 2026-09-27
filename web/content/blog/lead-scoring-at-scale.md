@@ -56,7 +56,7 @@ Normalize every answer to 0–1, then weight. Ours ships as need 0.4, timeline 0
 
 ## The confidence rule that saves deals
 
-This is the part teams get wrong: they treat a low score as a cold lead. A low *confidence* is not a cold lead — it is an unknown. Below 0.5 on any criterion, record "not stated" and let the first reply ask the qualifying question. Low confidence never makes a lead cold; it makes it warm. The most expensive mistake in the funnel is a good deal marked cold and ignored.
+This is the part teams get wrong: they treat a low score as a cold lead. A low *confidence* is not a cold lead — it is an unknown. Below 0.5 on any criterion, record "not stated" and let the first reply ask the qualifying question. ==Low confidence never makes a lead cold; it makes it warm.== The most expensive mistake in the funnel is a good deal marked cold and ignored.
 
 | Situation | Action |
 |---|---|

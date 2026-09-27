@@ -72,17 +72,41 @@
 /* Rendered markdown (docs pages) and legal copy */
 @layer components {
   .doc-body h1 {
-    @apply text-2xl font-bold tracking-tight mt-0 mb-3;
+    @apply text-3xl font-extrabold tracking-tight mt-0 mb-3;
   }
   .doc-body h2 {
-    @apply text-lg font-semibold mt-7 border-b border-border pb-1.5;
+    @apply text-xl font-bold mt-7 border-b border-border pb-1.5;
   }
   .doc-body h3 {
-    @apply text-base font-semibold mt-4;
+    @apply text-lg font-semibold mt-4;
+  }
+  .doc-body h4 {
+    @apply text-base font-semibold mt-3;
   }
   .doc-body p,
   .doc-body li {
-    @apply max-w-[68ch] text-sm leading-6;
+    @apply text-[15px] leading-7;
+  }
+  .doc-body strong {
+    @apply font-bold text-foreground;
+  }
+  .doc-body em {
+    @apply text-foreground;
+  }
+  .doc-body mark {
+    background: hsl(var(--warning) / 0.28);
+    color: hsl(var(--foreground));
+    border-radius: 4px;
+    padding: 0 4px;
+  }
+  .doc-body u {
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--ember));
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .doc-body del {
+    @apply text-muted-foreground;
   }
   .doc-body table {
     @apply w-full text-[13px] my-3 block overflow-x-auto border-collapse;

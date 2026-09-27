@@ -58,7 +58,7 @@ Each pair returns a relevance score (0–3), two yes/no probabilities, and a con
 | High-value commercial target | Editor approves regardless |
 | Nothing fits | Skip — forced links rot trust |
 
-Expect a chunk of honest "no link" verdicts. A page the model refuses to link is a finding, not a failure: it tells you where the content has no natural next step.
+Expect a chunk of honest "no link" verdicts. ==A page the model refuses to link is a finding, not a failure:== it tells you where the content has no natural next step.
 
 ## What it costs
 

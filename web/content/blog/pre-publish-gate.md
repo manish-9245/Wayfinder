@@ -43,7 +43,7 @@ The publish rule is strict on purpose: all three signals at 0.8 or above. A draf
 
 ## Tuning the gate
 
-Start strict, then loosen with evidence, never the reverse. Log every gate decision against what the human reviewer later found; after a few hundred drafts you will know which of the three checks is too jumpy for your niche. Thresholds are per-call overrides, so the how-to vertical can run looser than the medical one without a redeploy.
+++Start strict, then loosen with evidence++ — never the reverse. Log every gate decision against what the human reviewer later found; after a few hundred drafts you will know which of the three checks is too jumpy for your niche. Thresholds are per-call overrides, so the how-to vertical can run looser than the medical one without a redeploy.
 
 ## Pitfalls
 

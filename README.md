@@ -163,5 +163,7 @@ precision for a week, then tune per policy. Gate on `confidence`, never on
 
 Docs live in [`docs/`](docs/): [architecture](docs/ARCHITECTURE.md),
 [API](docs/API.md), [policies](docs/POLICIES.md), [MCP](docs/MCP.md),
-[deploy](docs/DEPLOY.md). To contribute, read
+[deploy](docs/DEPLOY.md). Build guides (10 product use cases + setup) live
+on the site at `/blog` — source in [`web/content/blog/`](web/content/blog/),
+one Markdown file per post with frontmatter. To contribute, read
 [CONTRIBUTING.md](CONTRIBUTING.md). License: Apache-2.0 ([LICENSE](LICENSE)).
