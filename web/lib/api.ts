@@ -9,19 +9,49 @@ export interface DecideResult {
   usage?: Record<string, number>;
 }
 
-import { redirectToLogin } from "@/lib/login-redirect";
+import { AUTH_OFF } from "@/lib/supertokens";
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
+/** Thrown when the gateway answers 401. Pages render an inline sign-in
+ *  prompt for this — never a forced full-page redirect (redirects destroy
+ *  whatever the user was doing). */
+export class AuthError extends Error {
+  status = 401;
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthError";
+  }
+}
+
+export function isAuthError(e: unknown): boolean {
+  return e instanceof AuthError;
+}
+
+/** One silent session-refresh attempt (expired access token, valid refresh
+ *  token). Returns true when the caller should retry the request. */
+async function tryRefresh(): Promise<boolean> {
+  if (AUTH_OFF || typeof window === "undefined") return false;
+  try {
+    const { default: Session } = await import("supertokens-auth-react/recipe/session");
+    return await Session.attemptRefreshingSession();
+  } catch {
+    return false;
+  }
+}
+
+async function req<T>(path: string, init?: RequestInit, retried = false): Promise<T> {
   let saved: string | null = null;
   try { saved = localStorage.getItem("wayfinder.key"); } catch { /* ssr/private */ }
   const headers: Record<string, string> = { "content-type": "application/json", ...(init?.headers as any || {}) };
   if (saved && !headers.authorization) headers.authorization = `Bearer ${saved}`;
-  const r = await fetch(path, { ...init, headers });
+  // credentials:include sends the session cookies — without it even a fresh
+  // login 401s on every call and the UI bounces back to /auth in a loop.
+  const r = await fetch(path, { ...init, headers, credentials: "include" });
+  if (r.status === 401 && !retried && !saved && (await tryRefresh())) {
+    return req<T>(path, init, true);
+  }
   const j = await r.json().catch(() => ({}));
   if (r.status === 401) {
-    redirectToLogin(
-      (j as any).detail || "Sign-in required — log in or add an API key from the dashboard to continue."
-    );
+    throw new AuthError((j as any).detail || "Sign-in required — log in or add an API key to continue.");
   }
   if (!r.ok) throw new Error((j as any).detail || `request failed (${r.status})`);
   return j as T;

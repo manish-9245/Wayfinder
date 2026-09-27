@@ -14,9 +14,11 @@ import { AuthSlot } from "./AuthState";
 const TABS = [
   ["/", "Home"],
   ["/console", "Console"],
+  ["/blog", "Blog"],
   ["/docs", "Docs"],
-  ["/dashboard", "Dashboard"],
 ] as const;
+
+const DASHBOARD_TAB = ["/dashboard", "Dashboard"] as const;
 
 const ADMIN_TAB = ["/admin", "Admin"] as const;
 
@@ -56,15 +58,20 @@ export default function SiteHeader() {
   const path = usePathname();
   const [status, setStatus] = useState("connecting…");
   const [ok, setOk] = useState<boolean | null>(null);
+  const [authed, setAuthed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     let live = true;
-    // Quiet identity check (no login redirect): the Admin tab only appears
-    // for admins. In keyless dev mode the local dev-admin owns everything.
+    // Quiet identity check (no login redirect): Dashboard appears only when
+    // signed in, Admin only for admins. In keyless dev mode the local
+    // dev-admin owns everything.
     (async () => {
       if (AUTH_OFF) {
-        if (live) setIsAdmin(true);
+        if (live) {
+          setAuthed(true);
+          setIsAdmin(true);
+        }
         return;
       }
       try {
@@ -79,9 +86,12 @@ export default function SiteHeader() {
           headers: key ? { authorization: `Bearer ${key}` } : {},
         });
         if (!live) return;
-        if (r.ok) setIsAdmin((await r.json()).role === "admin");
+        if (r.ok) {
+          setAuthed(true);
+          setIsAdmin((await r.json()).role === "admin");
+        }
       } catch {
-        /* offline or anonymous — Admin stays hidden */
+        /* offline or anonymous — Dashboard and Admin stay hidden */
       }
     })();
     return () => {
@@ -129,7 +139,7 @@ export default function SiteHeader() {
           <span>Wayfinder</span>
         </Link>
         <nav className="order-3 flex basis-full gap-1 overflow-x-auto md:order-none md:basis-auto" aria-label="Primary">
-          {[...TABS, ...(isAdmin ? [ADMIN_TAB] : [])].map(([href, label]) => (
+          {[...TABS, ...(authed ? [DASHBOARD_TAB] : []), ...(isAdmin ? [ADMIN_TAB] : [])].map(([href, label]) => (
             <Button
               key={href}
               variant="ghost"

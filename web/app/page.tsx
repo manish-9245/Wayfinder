@@ -222,6 +222,7 @@ export default function Home() {
           </div>
           <nav className="mt-14 flex flex-wrap justify-center gap-x-6 gap-y-2 font-tsj-mono text-[12px] uppercase tracking-[0.14em]" aria-label="Footer">
             <Link href="/docs" className="text-muted-foreground hover:text-foreground">API reference</Link>
+            <Link href="/blog" className="text-muted-foreground hover:text-foreground">Blog</Link>
             <Link href="/docs" className="text-muted-foreground hover:text-foreground">MCP server</Link>
             <Link href="/metrics" className="text-muted-foreground hover:text-foreground">Status</Link>
             <Link href="/legal" className="text-muted-foreground hover:text-foreground">Privacy and terms</Link>

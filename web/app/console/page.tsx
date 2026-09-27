@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { api, toast, type DecideResult } from "@/lib/api";
+import { api, isAuthError, toast, type DecideResult } from "@/lib/api";
+import { AuthNeeded } from "@/components/auth-needed";
 import { EXAMPLES } from "@/lib/examples";
 import { AnswerCard, VerdictHero } from "@/components/Verdict";
 import { JsonBlock } from "@/components/json-block";
@@ -84,6 +85,7 @@ export default function ConsolePage() {
   const [busy, setBusy] = useState(false);
   const [meta, setMeta] = useState("");
   const [res, setRes] = useState<DecideResult | null>(null);
+  const [authNeeded, setAuthNeeded] = useState(false);
 
   useEffect(() => {
     api.policiesFull().then((p) => {
@@ -107,14 +109,17 @@ export default function ConsolePage() {
     let o: Record<string, any> = {};
     try { o = JSON.parse(opts || "{}"); }
     catch { setOptsErr("Options is not valid JSON. It must be an object like {}."); return; }
-    setBusy(true); setRes(null);
+    setBusy(true); setRes(null); setAuthNeeded(false);
     const t0 = performance.now();
     try {
       const j = await api.decide(policy, st, o);
       setRes(j);
       const ms = (performance.now() - t0).toFixed(0);
       setMeta(`${ms}ms, cache ${j.cache_hit ? "hit" : "miss"}. Routed ${j.routing?.model || "auto"}: ${j.routing?.reason || "language auto-detect"}`);
-    } catch (e: any) { toast(e.message); }
+    } catch (e: any) {
+      if (isAuthError(e)) setAuthNeeded(true);
+      else toast(e.message);
+    }
     finally { setBusy(false); }
   }, [policy, state, opts]);
 
@@ -264,6 +269,7 @@ export default function ConsolePage() {
           </CardContent>
         </Card>
       )}
+      {authNeeded && !res && <AuthNeeded onAuthed={send} />}
       {res && (
         <section aria-label="Decision result" className="grid gap-6">
           <div>

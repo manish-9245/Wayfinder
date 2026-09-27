@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useEffect, useState } from "react";
-import { api, toast, topOf, verdictOf, type DecideResult } from "@/lib/api";
+import { api, isAuthError, toast, topOf, verdictOf, type DecideResult } from "@/lib/api";
+import { AuthNeeded } from "@/components/auth-needed";
 import { SAMPLE_BATCH } from "@/lib/examples";
 import { EmptyBox } from "@/components/illustrations";
 import { Doubtling } from "@/components/mascots";
@@ -24,6 +25,7 @@ export default function BatchPage() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [text, setText] = useState('{"body": "Refund invoice 4411 please"}\n{"body": "The API returns 500 on every deploy"}\n{"body": "मुझसे दो बार शुल्क लिया गया"}');
   const [err, setErr] = useState("");
+  const [authNeeded, setAuthNeeded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [meta, setMeta] = useState("");
   const [rows, setRows] = useState<{ state: unknown; res: DecideResult }[]>([]);
@@ -36,7 +38,7 @@ export default function BatchPage() {
   }, []);
 
   const send = async () => {
-    setErr("");
+    setErr(""); setAuthNeeded(false);
     const lines = text.split("\n").map((s) => s.trim()).filter(Boolean);
     const states: unknown[] = [];
     for (const [i, l] of lines.entries()) {
@@ -50,7 +52,10 @@ export default function BatchPage() {
       const j = await api.batch(states, policy);
       setMeta(`${j.count} states in ${(performance.now() - t0).toFixed(0)}ms`);
       setRows(j.results.map((res, i) => ({ state: states[i], res })));
-    } catch (e: any) { toast(e.message); }
+    } catch (e: any) {
+      if (isAuthError(e)) setAuthNeeded(true);
+      else toast(e.message);
+    }
     finally { setBusy(false); }
   };
 
@@ -137,6 +142,8 @@ export default function BatchPage() {
           <span className="font-tsj-mono text-xs text-muted-foreground" role="status">{meta}</span>
         </p>
       </section>
+
+      {authNeeded && <AuthNeeded onAuthed={send} />}
 
       {rows.length > 0 ? (
         <section aria-label="Results">

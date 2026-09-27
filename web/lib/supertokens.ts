@@ -1,4 +1,5 @@
 import SuperTokens from "supertokens-auth-react";
+import { safeNext } from "@/lib/login-redirect";
 import EmailPassword from "supertokens-auth-react/recipe/emailpassword";
 import { EmailPasswordPreBuiltUI } from "supertokens-auth-react/recipe/emailpassword/prebuiltui";
 import ThirdParty from "supertokens-auth-react/recipe/thirdparty";
@@ -50,6 +51,15 @@ export function initSuperTokens() {
       apiBasePath: "/api/auth",
       websiteDomain: o,
       websiteBasePath: "/auth",
+    },
+    // After a successful sign-in/up, return to the page that asked for
+    // login (?next=...) instead of dropping the user on the homepage.
+    getRedirectionURL: async (context: any) => {
+      if (context.action === "SUCCESS" && typeof window !== "undefined") {
+        const next = safeNext(new URLSearchParams(window.location.search).get("next"));
+        if (next) return next;
+      }
+      return undefined;
     },
     recipeList: [
       ...(providers.length

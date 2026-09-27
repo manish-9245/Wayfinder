@@ -37,18 +37,35 @@ async function bearer(getToken?: GetToken): Promise<string | null> {
 }
 
 import { redirectToLogin } from "@/lib/login-redirect";
+import { AUTH_OFF } from "@/lib/supertokens";
 
-async function call<T>(path: string, init: RequestInit = {}, getToken?: GetToken): Promise<T> {
+function headersFor(token: string | null, init: RequestInit): Record<string, string> {
+  return {
+    "content-type": "application/json",
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+    ...(init.headers as any || {}),
+  };
+}
+
+async function call<T>(path: string, init: RequestInit = {}, getToken?: GetToken, retried = false): Promise<T> {
   const token = await bearer(getToken);
   const r = await fetch(`/api${path}`, {
     ...init,
     credentials: "include",
-    headers: {
-      "content-type": "application/json",
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-      ...(init.headers || {}),
-    },
+    headers: headersFor(token, init),
   });
+  // Expired access token with a valid refresh token: refresh silently and
+  // retry once instead of bouncing a signed-in user to /auth.
+  if (r.status === 401 && !retried && !token && !AUTH_OFF && typeof window !== "undefined") {
+    try {
+      const { default: Session } = await import("supertokens-auth-react/recipe/session");
+      if (await Session.attemptRefreshingSession()) {
+        return call<T>(path, init, getToken, true);
+      }
+    } catch {
+      /* fall through to the login redirect */
+    }
+  }
   if (r.status === 204) return undefined as T;
   const j = await r.json().catch(() => ({}));
   if (r.status === 401) {
