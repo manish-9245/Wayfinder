@@ -1,0 +1,12 @@
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "syn_intent_e01", "state": {"text": "purchase disney plus annual subscription"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn_intent_e02", "state": {"text": "best mechanical keyboard for programming reddit"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "syn_intent_e03", "state": {"text": "how does a microwave oven heat food"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "syn_intent_e04", "state": {"text": "spotify web player open"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "syn_intent_e05", "state": {"text": "dishwasher not draining water fix"}}
+{"expected": {"intent": "other"}, "expected_verdict": "act", "id": "syn_intent_e06", "state": {"text": "qzxw qzxw lorem"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn_intent_e07", "state": {"text": "macbook air m3 vs pro 14 inch buying advice"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "syn_intent_e08", "state": {"text": "reserve a table for two tonight downtown"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "syn_intent_e09", "state": {"text": "who painted the starry night"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "syn_intent_e10", "state": {"text": "return broken headphones warranty claim"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "syn_intent_e11", "state": {"text": "chase bank online banking login"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn_intent_e12", "state": {"text": "cheapest electric suv 2026 comparison"}}

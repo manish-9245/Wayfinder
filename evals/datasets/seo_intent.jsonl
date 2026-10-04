@@ -1,0 +1,20 @@
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "seo_intent_001", "state": {"text": "best crm for 20 person agency pricing"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "seo_intent_002", "state": {"text": "how does photosynthesis work"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "seo_intent_003", "state": {"text": "buy iphone 15 pro max 256gb"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "seo_intent_004", "state": {"text": "facebook login page"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "seo_intent_005", "state": {"text": "how to reset my gmail password"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "seo_intent_006", "state": {"text": "why is the sky blue"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "seo_intent_007", "state": {"text": "hubspot vs salesforce review comparison"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "seo_intent_008", "state": {"text": "book dentist appointment online near me"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "seo_intent_009", "state": {"text": "youtube official site"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "seo_intent_010", "state": {"text": "printer not connecting to wifi troubleshooting"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "seo_intent_011", "state": {"text": "what causes earthquakes explained"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "seo_intent_012", "state": {"text": "best noise cancelling headphones 2024 review"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "seo_intent_013", "state": {"text": "sign up for notion plus plan"}}
+{"expected": {"intent": "other"}, "expected_verdict": "act", "id": "seo_intent_014", "state": {"text": "asdf qwerty random gibberish xyz"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "seo_intent_015", "state": {"text": "refund status for order 12345 help"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "seo_intent_016", "state": {"text": "history of the roman empire timeline"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "seo_intent_017", "state": {"text": "cheapest car insurance quotes compare"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "seo_intent_018", "state": {"text": "order pizza delivery now"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "seo_intent_019", "state": {"text": "github docs pages"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "seo_intent_020", "state": {"text": "my account was charged twice, fix billing"}}

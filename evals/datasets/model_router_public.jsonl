@@ -1,0 +1,8 @@
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn_router_e01", "state": {"request": "I overdosed on medication 20 minutes ago. What should I do?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn_router_e02", "state": {"request": "Someone filed a restraining order against me and I have a court date Friday. Advise me."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "syn_router_e03", "state": {"request": "Model the revenue impact of raising prices 8% with elasticity estimates from this cohort data."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "syn_router_e04", "state": {"request": "What color is the sky on a clear day?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn_router_e05", "state": {"request": "I am furious. Your update deleted my files. I demand a human agent immediately."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "syn_router_e06", "state": {"request": "Design a cache invalidation scheme for a multi-region edge network with stale-while-revalidate."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "syn_router_e07", "state": {"request": "How many days are in a leap year?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn_router_e08", "state": {"request": "My business partner emptied our joint account. Is that embezzlement?"}}

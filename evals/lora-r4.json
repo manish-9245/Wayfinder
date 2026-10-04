@@ -1,0 +1,258 @@
+{
+  "micro_q_acc": 0.7715633423180593,
+  "macro_q_acc": 0.7703363636363637,
+  "micro_verdict_acc": 0.502835538752363,
+  "avg_ms": 282.03236640101767,
+  "per_policy": {
+    "content_safety": {
+      "q_acc": 0.8,
+      "q_ok": 240,
+      "q_n": 300,
+      "verdict_acc": 0.49,
+      "v_ok": 49,
+      "v_n": 100,
+      "by_question": {
+        "toxic": {
+          "acc": 0.93,
+          "ok": 93,
+          "n": 100
+        },
+        "threat": {
+          "acc": 0.94,
+          "ok": 94,
+          "n": 100
+        },
+        "severity": {
+          "acc": 0.53,
+          "ok": 53,
+          "n": 100
+        }
+      }
+    },
+    "lead_scoring": {
+      "q_acc": 0.7421,
+      "q_ok": 141,
+      "q_n": 190,
+      "verdict_acc": 0.3421,
+      "v_ok": 13,
+      "v_n": 38,
+      "by_question": {
+        "is_sales_enquiry": {
+          "acc": 0.7632,
+          "ok": 29,
+          "n": 38
+        },
+        "need": {
+          "acc": 0.7632,
+          "ok": 29,
+          "n": 38
+        },
+        "timeline": {
+          "acc": 0.6842,
+          "ok": 26,
+          "n": 38
+        },
+        "authority": {
+          "acc": 0.7368,
+          "ok": 28,
+          "n": 38
+        },
+        "budget": {
+          "acc": 0.7632,
+          "ok": 29,
+          "n": 38
+        }
+      }
+    },
+    "llm_firewall": {
+      "q_acc": 0.7724,
+      "q_ok": 302,
+      "q_n": 391,
+      "verdict_acc": 0.6739,
+      "v_ok": 93,
+      "v_n": 138,
+      "by_question": {
+        "jailbreak": {
+          "acc": 0.9913,
+          "ok": 114,
+          "n": 115
+        },
+        "injection": {
+          "acc": 0.7536,
+          "ok": 104,
+          "n": 138
+        },
+        "leak_risk": {
+          "acc": 0.6087,
+          "ok": 84,
+          "n": 138
+        }
+      }
+    },
+    "model_router": {
+      "q_acc": 0.7105,
+      "q_ok": 27,
+      "q_n": 38,
+      "verdict_acc": 0.0,
+      "v_ok": 0,
+      "v_n": 38,
+      "by_question": {
+        "route": {
+          "acc": 0.7105,
+          "ok": 27,
+          "n": 38
+        }
+      }
+    },
+    "seo_answer": {
+      "q_acc": 1.0,
+      "q_ok": 12,
+      "q_n": 12,
+      "verdict_acc": 0.25,
+      "v_ok": 3,
+      "v_n": 12,
+      "by_question": {
+        "answer_relevance": {
+          "acc": 1.0,
+          "ok": 12,
+          "n": 12
+        }
+      }
+    },
+    "seo_audit": {
+      "q_acc": 0.4667,
+      "q_ok": 28,
+      "q_n": 60,
+      "verdict_acc": 0.0,
+      "v_ok": 0,
+      "v_n": 30,
+      "by_question": {
+        "action": {
+          "acc": 0.3333,
+          "ok": 10,
+          "n": 30
+        },
+        "freshness": {
+          "acc": 0.6,
+          "ok": 18,
+          "n": 30
+        }
+      }
+    },
+    "seo_gate": {
+      "q_acc": 0.8333,
+      "q_ok": 35,
+      "q_n": 42,
+      "verdict_acc": 0.4286,
+      "v_ok": 6,
+      "v_n": 14,
+      "by_question": {
+        "intent_match": {
+          "acc": 0.8571,
+          "ok": 12,
+          "n": 14
+        },
+        "grounded": {
+          "acc": 0.8571,
+          "ok": 12,
+          "n": 14
+        },
+        "links_sane": {
+          "acc": 0.7857,
+          "ok": 11,
+          "n": 14
+        }
+      }
+    },
+    "seo_intent": {
+      "q_acc": 0.4894,
+      "q_ok": 23,
+      "q_n": 47,
+      "verdict_acc": 0.1489,
+      "v_ok": 7,
+      "v_n": 47,
+      "by_question": {
+        "intent": {
+          "acc": 0.4894,
+          "ok": 23,
+          "n": 47
+        }
+      }
+    },
+    "seo_internal_link": {
+      "q_acc": 1.0,
+      "q_ok": 36,
+      "q_n": 36,
+      "verdict_acc": 0.3333,
+      "v_ok": 4,
+      "v_n": 12,
+      "by_question": {
+        "relevance": {
+          "acc": 1.0,
+          "ok": 12,
+          "n": 12
+        },
+        "has_reason": {
+          "acc": 1.0,
+          "ok": 12,
+          "n": 12
+        },
+        "anchor_ready": {
+          "acc": 1.0,
+          "ok": 12,
+          "n": 12
+        }
+      }
+    },
+    "seo_prospect": {
+      "q_acc": 0.8438,
+      "q_ok": 27,
+      "q_n": 32,
+      "verdict_acc": 0.5625,
+      "v_ok": 9,
+      "v_n": 16,
+      "by_question": {
+        "relevance": {
+          "acc": 0.8125,
+          "ok": 13,
+          "n": 16
+        },
+        "message_fit": {
+          "acc": 0.875,
+          "ok": 14,
+          "n": 16
+        }
+      }
+    },
+    "support_inbound": {
+      "q_acc": 0.8155,
+      "q_ok": 274,
+      "q_n": 336,
+      "verdict_acc": 0.9762,
+      "v_ok": 82,
+      "v_n": 84,
+      "by_question": {
+        "department": {
+          "acc": 0.6548,
+          "ok": 55,
+          "n": 84
+        },
+        "urgency": {
+          "acc": 0.6071,
+          "ok": 51,
+          "n": 84
+        },
+        "churn_risk": {
+          "acc": 1.0,
+          "ok": 84,
+          "n": 84
+        },
+        "refund_requested": {
+          "acc": 1.0,
+          "ok": 84,
+          "n": 84
+        }
+      }
+    }
+  }
+}

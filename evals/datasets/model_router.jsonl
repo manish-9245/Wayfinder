@@ -1,0 +1,22 @@
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_001", "state": {"request": "What is 2 + 2?"}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_002", "state": {"request": "Translate 'hello' to French."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_003", "state": {"request": "What is the capital of Japan?"}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_004", "state": {"request": "Summarize this paragraph in one sentence: The cat sat on the mat."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_005", "state": {"request": "Convert 72 Fahrenheit to Celsius."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_006", "state": {"request": "List three colors in a rainbow."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_007", "state": {"request": "Prove that there are infinitely many primes, and explain why the proof generalizes to arithmetic progressions."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_008", "state": {"request": "Design a distributed consensus protocol that survives Byzantine faults with minimal rounds; analyze trade-offs."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_009", "state": {"request": "We are acquiring a competitor for $40M. Model the tax implications across three jurisdictions and recommend a structure."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_010", "state": {"request": "Debug this race condition in a lock-free queue under high contention; the failure is intermittent and irreversible in production."}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "model_router_011", "state": {"request": "I am having chest pains and feel dizzy. Should I go to the emergency room?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "model_router_012", "state": {"request": "Draft a binding merger agreement with liability and indemnification clauses for our acquisition."}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "model_router_013", "state": {"request": "I am furious about your billing error and want to speak to a real person now, this is unacceptable."}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "model_router_014", "state": {"request": "My child swallowed a household cleaner. What should I do right now?"}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_015", "state": {"request": "What time is it in London right now?"}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_016", "state": {"request": "Fix this typo: 'recieve'."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_017", "state": {"request": "Compare eventual consistency vs strong consistency for a global payments ledger; recommend one with failure analysis."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_018", "state": {"request": "Write a formal proof of correctness for this Paxos variant under asynchronous networks."}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "model_router_019", "state": {"request": "I need legal advice about whether I can be sued for breaking a lease early."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_020", "state": {"request": "How many days are in February 2024?"}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "model_router_021", "state": {"request": "Rewrite this sentence to be more polite: 'Send me the file now.'"}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "model_router_022", "state": {"request": "Our production database migration will irreversibly rewrite 10M rows. Plan the safest cutover with rollback analysis."}}

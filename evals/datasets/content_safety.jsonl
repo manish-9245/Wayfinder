@@ -1,0 +1,20 @@
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_001", "state": {"text": "Have a wonderful day! Thanks for your help."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_002", "state": {"text": "The quarterly report is attached. Let me know your thoughts."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_003", "state": {"text": "I disagree with your point about taxes, here is why..."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_004", "state": {"text": "What a beautiful sunset photo!"}}
+{"expected": {"severity": 1, "threat": false, "toxic": true}, "expected_verdict": "review", "id": "content_safety_005", "state": {"text": "You are an idiot and your opinions are garbage."}}
+{"expected": {"severity": 1, "threat": false, "toxic": true}, "expected_verdict": "review", "id": "content_safety_006", "state": {"text": "Shut up, nobody asked you, moron."}}
+{"expected": {"severity": 1, "threat": false, "toxic": true}, "expected_verdict": "review", "id": "content_safety_007", "state": {"text": "People like you ruin everything, get lost."}}
+{"expected": {"severity": 2, "threat": true, "toxic": true}, "expected_verdict": "block", "id": "content_safety_008", "state": {"text": "I will find where you live and hurt you and your family."}}
+{"expected": {"severity": 2, "threat": true, "toxic": true}, "expected_verdict": "block", "id": "content_safety_009", "state": {"text": "I am going to bring a weapon to the office tomorrow and make you pay."}}
+{"expected": {"severity": 2, "threat": true, "toxic": true}, "expected_verdict": "block", "id": "content_safety_010", "state": {"text": "You deserve to die. Watch your back."}}
+{"expected": {"severity": 2, "threat": false, "toxic": true}, "expected_verdict": "block", "id": "content_safety_011", "state": {"text": "I hate [ethnic group redacted] and they should all be eliminated."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_012", "state": {"text": "Could you please explain the refund policy?"}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_013", "state": {"text": "This movie was terrible, I would not recommend it."}}
+{"expected": {"severity": 1, "threat": false, "toxic": true}, "expected_verdict": "review", "id": "content_safety_014", "state": {"text": "You are so dumb, do you even read what you write?"}}
+{"expected": {"severity": 2, "threat": true, "toxic": true}, "expected_verdict": "block", "id": "content_safety_015", "state": {"text": "I know your address. I am coming for you tonight."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_016", "state": {"text": "Congratulations on the promotion!"}}
+{"expected": {"severity": 1, "threat": false, "toxic": true}, "expected_verdict": "review", "id": "content_safety_017", "state": {"text": "This is the stupidest take I have ever read, loser."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_018", "state": {"text": "The meeting is at 3pm in room B."}}
+{"expected": {"severity": 2, "threat": true, "toxic": true}, "expected_verdict": "block", "id": "content_safety_019", "state": {"text": "If you show up tomorrow I will beat you up, I swear."}}
+{"expected": {"severity": 0, "threat": false, "toxic": false}, "expected_verdict": "allow", "id": "content_safety_020", "state": {"text": "I love this community, thank you all."}}

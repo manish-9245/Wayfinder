@@ -10,6 +10,8 @@ __pycache__/
 web/.env.local
 *.log
 .DS_Store
+# finetuned checkpoint dirs (GBs, reproducible via finetune/train.py) — never commit
+finetune/out-*/
 # local SQLite platform DB (postgres in production)
 data/
 web/node_modules/

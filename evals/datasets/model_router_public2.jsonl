@@ -1,0 +1,8 @@
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn2_router_e01", "state": {"request": "Chest tightness and shortness of breath for an hour. Should I call emergency services?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn2_router_e02", "state": {"request": "My contractor took a deposit and vanished. Can I take him to small claims court?"}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "syn2_router_e03", "state": {"request": "Identify the confounder in this churn analysis and re-estimate the treatment effect."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "syn2_router_e04", "state": {"request": "What is the opposite of hot?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn2_router_e05", "state": {"request": "Absolutely disgusting support. I want a real human being on the line this instant."}}
+{"expected": {"route": "frontier"}, "expected_verdict": "act", "id": "syn2_router_e06", "state": {"request": "Plan a zero-downtime Kubernetes upgrade across 40 clusters with rollback gates."}}
+{"expected": {"route": "small"}, "expected_verdict": "act", "id": "syn2_router_e07", "state": {"request": "How many continents are there?"}}
+{"expected": {"route": "human"}, "expected_verdict": "act", "id": "syn2_router_e08", "state": {"request": "I was served divorce papers this morning and do not know what to do first."}}

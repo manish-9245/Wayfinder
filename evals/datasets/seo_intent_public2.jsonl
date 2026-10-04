@@ -1,0 +1,15 @@
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn2_intent_e01", "state": {"text": "best 4k tv for gaming low input lag"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "syn2_intent_e02", "state": {"text": "preorder the new zelda game"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "syn2_intent_e03", "state": {"text": "how do planes fly lift explained"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "syn2_intent_e04", "state": {"text": "dropbox login page"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "syn2_intent_e05", "state": {"text": "toilet keeps running how to fix flapper"}}
+{"expected": {"intent": "other"}, "expected_verdict": "act", "id": "syn2_intent_e06", "state": {"text": "qwertyuiop"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn2_intent_e07", "state": {"text": "all inclusive resorts cancun adults only ratings"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "syn2_intent_e08", "state": {"text": "transfer money internationally low fees signup"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "syn2_intent_e09", "state": {"text": "what is the deepest part of the ocean"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "syn2_intent_e10", "state": {"text": "lawn mower wont start after winter"}}
+{"expected": {"intent": "navigational"}, "expected_verdict": "act", "id": "syn2_intent_e11", "state": {"text": "american express account login"}}
+{"expected": {"intent": "commercial"}, "expected_verdict": "act", "id": "syn2_intent_e12", "state": {"text": "best pet insurance for cats reviews"}}
+{"expected": {"intent": "transactional"}, "expected_verdict": "act", "id": "syn2_intent_e13", "state": {"text": "get a quote for home insurance online"}}
+{"expected": {"intent": "informational"}, "expected_verdict": "act", "id": "syn2_intent_e14", "state": {"text": "why do onions make you cry chemistry"}}
+{"expected": {"intent": "support"}, "expected_verdict": "act", "id": "syn2_intent_e15", "state": {"text": "garbage disposal jammed reset button"}}
